@@ -1,0 +1,29 @@
+
+List[int] getList()
+{
+    return [0, 1, 2, 3, 4];
+}
+
+int getSum(List[int] l)
+{
+    
+    sum = 0;
+    
+    for item in l
+    {
+        sum += item;
+    }
+    
+    return sum;
+}
+
+int main(List[String] args)
+{
+    l = getList();
+    
+    sum = getSum(l);
+    
+    print("Hey, {l} sums to {sum}")
+    
+    return 0;
+}

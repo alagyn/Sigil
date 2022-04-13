@@ -1,0 +1,42 @@
+ 
+ values = [0, 1, 2, 3, 4, 5, 6]
+ 
+ int main(List[String] args)
+ {
+        for x in values
+        {
+            print(x);
+        }
+        
+        for x = 0 while x < values.len then ++x
+        {
+            print(x + values[x]);
+        }
+        
+        sum = 0;
+        
+        for x in values
+        {
+            sum += x;
+            if sum > 5 then break;
+        }
+        
+        sum = 0
+        
+        for x in values
+        {
+            if x <= 2 then continue;
+            
+            if x == 6 then break else sum += x;
+        }
+        
+        print(sum);
+        
+        do
+        {
+            sum -= 5;
+        }
+        while sum > 0;
+        
+        return 0;
+ }

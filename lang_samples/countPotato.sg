@@ -1,0 +1,21 @@
+import sys
+
+int main(List[String] args)
+{
+    count = 0;
+
+    with open(sys.args[0], mode="r") as f
+    {
+        for line in f.lines()
+        {
+            if line.startsWith('potato')
+            {
+                ++count;
+            }
+        }
+    }
+    
+    print(f"There are {count} potatos in {sys.args[0]}");
+  
+    return 0;
+}

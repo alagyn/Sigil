@@ -1,0 +1,17 @@
+
+enum Type
+{
+    T1, T2, T3, T4
+}
+
+int main(List[String] args)
+{
+        var = Type.T1;
+        
+        print(check(var));
+}
+
+bool check(Type x)
+{
+    return x == Type.T1 or x == Type.T3;
+}

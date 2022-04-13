@@ -1,0 +1,97 @@
+import math;
+
+class Vehicle
+{
+
+    private
+    {
+        static idGen = 0;
+        int id;
+    }
+
+    //Outside access (i.e. public access) is essentially const
+    //Internally it acts like a normal private member
+    readonly
+    {
+        int gasRemaining;
+        int odometer;
+    }
+    
+    //Shared == c++ protected
+    //Inaccessible from public access, accessible from subclasses
+    shared
+    {
+        int gasMax;
+    }
+    
+    //Common == shared + readonly
+    //Public access is const, subclass access is not
+    common
+    {
+        String currentLocation = "";
+        float mpg;
+    }
+    
+    public
+    {
+        String name;
+    }
+    
+    public Vehicle(String name, int gasMax, float mpg)
+    {
+        this.name = name;
+        id = idGen++;
+        
+        this.gasMax = gasMax;
+        gasRemaining = gasMax;
+        
+        odometer = 0;
+        
+        this.mpg = mpg;
+    }
+    
+    public int refill(int amount)
+    {
+        unfilled = gasMax - gasRemaining
+        
+        if amount <= unfilled
+        {
+            gasRemaining += amount;
+            return 0;
+        }
+        else
+        {
+            gasRemaining = gasMax;
+            return amount - unfilled;
+        }
+    }
+    
+    public bool drive(int miles)
+    {
+        gasRequired = math.round(miles * mpg);
+        
+        if gasRequired > gasRemaining
+        {
+            return false;
+        }
+        
+        gasRemaining -= gasRequired;
+        
+        odometer += miles;
+        
+        return true;
+    }
+
+}
+
+void main(List[String] args)
+{
+    c1 = Vehicle("Jimothy", 10, 2);
+    
+    print(c1.name);
+    
+    c1.name = "Bobbert";
+    
+    print("MPG: ");
+    
+}
