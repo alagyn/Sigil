@@ -1,7 +1,7 @@
  
  values = [0, 1, 2, 3, 4, 5, 6]
  
- int main(List[String] args)
+ int main(list[string] args)
  {
         for x in values
         {

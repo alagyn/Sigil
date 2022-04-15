@@ -1,10 +1,9 @@
-import sys
 
-int main(List[String] args)
+int main(list[string] args)
 {
     count = 0;
 
-    with open(sys.args[0], mode="r") as f
+    with open(args[0], mode="r") as f
     {
         for line in f.lines()
         {

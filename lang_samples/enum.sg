@@ -4,7 +4,7 @@ enum Type
     T1, T2, T3, T4
 }
 
-int main(List[String] args)
+int main(list[string] args)
 {
         var = Type.T1;
         

@@ -28,16 +28,16 @@ class Vehicle
     //Public access is const, subclass access is not
     common
     {
-        String currentLocation = "";
+        string currentLocation = "asdf";
         float mpg;
     }
     
     public
     {
-        String name;
+        string name;
     }
     
-    public Vehicle(String name, int gasMax, float mpg)
+    public Vehicle(string name, int gasMax, float mpg)
     {
         this.name = name;
         id = idGen++;
@@ -84,7 +84,7 @@ class Vehicle
 
 }
 
-void main(List[String] args)
+void main(list[string] args)
 {
     c1 = Vehicle("Jimothy", 10, 2);
     

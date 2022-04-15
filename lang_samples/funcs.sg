@@ -4,7 +4,7 @@ List[int] getList()
     return [0, 1, 2, 3, 4];
 }
 
-int getSum(List[int] l)
+int getSum(list[int] l)
 {
     
     sum = 0;
@@ -17,7 +17,7 @@ int getSum(List[int] l)
     return sum;
 }
 
-int main(List[String] args)
+int main(list[string] args)
 {
     l = getList();
     
