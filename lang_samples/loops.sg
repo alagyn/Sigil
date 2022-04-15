@@ -21,7 +21,7 @@
             if sum > 5 then break;
         }
         
-        sum = 0
+        sum = 0;
         
         for x in values
         {
@@ -37,6 +37,11 @@
             sum -= 5;
         }
         while sum > 0;
+        
+        for x in 0 to values.len
+        {
+          //code
+        }
         
         return 0;
  }
