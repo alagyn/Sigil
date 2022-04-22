@@ -1,0 +1,16 @@
+# Char declarations
+semicolon = ";";
+open_curly = "{";
+close_curly = "}";
+open_paren = "(";
+close_paren = ")";
+# Operators
+equals_sign = "=";
+
+name = "[a-zA-Z][a-zA-Z0-9_]*";
+integer = '[1-9][0-9]*';
+
+program = stmt;
+stmt = name equals_sign integer semicolon;
+
+
