@@ -3,14 +3,15 @@ from typing import List, Dict, Set, Tuple
 
 from rule import Rule
 from grammer import Grammer
+from lr1Grammer import LROneGrammer
 from errors import EBNFError
 from log import logErr, logInfo, logWrn
+import visualizeLR1
 
 NONTERM = 'nonterm'
 DEFIN = 'defin'
 TERM = 'term'
 
-GOAL_RE = re.compile(r'@ *(?P<nonterm>\w+) *;')
 RULE_RE = re.compile(r'(?P<nonterm>\w+) *= *(?P<defin>(\w+ *)+);')
 TERM_RE = re.compile(r'(?P<nonterm>\w+) *= *(?P<term>("[^"]+")|(\'[^\']+\')) *;')
 EPSI_RE = re.compile(r'(?P<nonterm>\w+) *= *EMPTY *;')
@@ -84,19 +85,15 @@ def parseGrammer(ruleLines: List[str]) -> Grammer:
     # Parse rules
     logInfo("Parsing EBNF Rules")
     errored = False
+    startFound = False
     for line in ruleLines:
         # Epsilon
         match = EPSI_RE.fullmatch(line)
         if match is not None:
+            if not startFound:
+                logWrn("Epsilon rule declared before start rule")
             nt = match.group(NONTERM)
             grammer.addNull(nt)
-            continue
-
-        # Goal
-        match = GOAL_RE.fullmatch(line)
-        if match is not None:
-            nt = match.group(NONTERM)
-            grammer.setGoal(nt)
             continue
 
         # Terminal
@@ -125,6 +122,11 @@ def parseGrammer(ruleLines: List[str]) -> Grammer:
             except EBNFError as e:
                 logErr(str(e))
                 errored = True
+
+            if not startFound:
+                grammer.setStart(nt)
+                startFound = True
+
             continue
 
         logErr(f"Invalid rule, skipping: {line}")
@@ -143,17 +145,12 @@ def parseEBNFFile(filename) -> Grammer:
 def parse(filename):
 
     grammer = parseEBNFFile(filename)
-    first, follow = grammer.computeFirstAndFollow()
+    grammer.computeFirstAndFollow()
 
-    print('')
-    print("First")
-    for key, val in first.items():
-        print(key, [x for x in val])
+    lr1 = LROneGrammer(grammer)
+    lr1.compute()
 
-    print('')
-    print("Follow")
-    for key, val in follow.items():
-        print(key, [x for x in val])
+    visualizeLR1.generateNetwork(lr1)
 
 
 if __name__ == '__main__':

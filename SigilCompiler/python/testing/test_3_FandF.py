@@ -13,7 +13,7 @@ class TestFirstAndFollow(unittest.TestCase):
 
         g = ebnf_parser.parseEBNFFile(testFile)
 
-        first, follow = g.computeFirstAndFollow()
+        g.computeFirstAndFollow()
 
         EXP_FIRST = {
             'P': {'open_p', 'int'},
@@ -31,7 +31,7 @@ class TestFirstAndFollow(unittest.TestCase):
 
         self.assertEqual(len(EXP_FIRST), len(EXP_FIRST), 'Len of first def not equal')
 
-        for key, val in first.items():
+        for key, val in g.first.items():
             self.assertTrue(key in EXP_FIRST, 'Name not in epected First dict')
             expSet = EXP_FIRST[key]
             self.assertEqual(len(expSet), len(val), 'Size of First set not equal')
@@ -47,7 +47,7 @@ class TestFirstAndFollow(unittest.TestCase):
             'F': {'plus', 'star', 'close_p', '$'}
         }
 
-        for key, val in follow.items():
+        for key, val in g.follow.items():
             self.assertTrue(key in EXP_FOLLOW, 'Name not in epected Follow dict')
             expSet = EXP_FOLLOW[key]
             self.assertEqual(len(expSet), len(val), 'Size of Follow set not equal')
@@ -62,7 +62,7 @@ class TestFirstAndFollow(unittest.TestCase):
 
         g = ebnf_parser.parseEBNFFile(testFile)
 
-        first, follow = g.computeFirstAndFollow()
+        g.computeFirstAndFollow()
 
         EXP_FIRST = {
             'Y': {'star', 'EMPTY'},
@@ -78,7 +78,7 @@ class TestFirstAndFollow(unittest.TestCase):
 
         self.assertEqual(len(EXP_FIRST), len(EXP_FIRST), 'Len of first def not equal')
 
-        for key, val in first.items():
+        for key, val in g.first.items():
             self.assertTrue(key in EXP_FIRST, 'Name not in epected First dict')
             expSet = EXP_FIRST[key]
             self.assertEqual(len(expSet), len(val), 'Size of First set not equal')
@@ -92,7 +92,7 @@ class TestFirstAndFollow(unittest.TestCase):
             'E': {'close_p', '$'}
         }
 
-        for key, val in follow.items():
+        for key, val in g.follow.items():
             self.assertTrue(key in EXP_FOLLOW, 'Name not in epected Follow dict')
             expSet = EXP_FOLLOW[key]
             self.assertEqual(len(expSet), len(val), 'Size of Follow set not equal')
