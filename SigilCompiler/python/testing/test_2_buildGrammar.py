@@ -3,12 +3,12 @@ import os.path
 
 from testConsts import TEST_ROOT
 import ebnf_parser
-from grammer import Grammer
+from grammar import Grammar
 from rule import Rule
 
-class TestBuildGrammer(unittest.TestCase):
+class TestBuildgrammar(unittest.TestCase):
 
-    def test_buildGrammer1(self):
+    def test_buildgrammar1(self):
         testFile = os.path.join(TEST_ROOT, 'test.ebnf')
 
         g = ebnf_parser.parseEBNFFile(testFile)

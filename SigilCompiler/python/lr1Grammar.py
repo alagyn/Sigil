@@ -1,6 +1,6 @@
 from typing import List, Set, Dict
 
-from grammer import Grammer
+from grammar import Grammar
 from rule import Rule
 from consts import END
 from errors import EBNFError
@@ -50,13 +50,13 @@ class AnnotRule:
     def refLA(self):
         return self._la
 
-    def getNewLA(self, g: Grammer) -> Set[str]:
+    def getNewLA(self, g: Grammar) -> Set[str]:
         """
         Returns the lookahead for closure rules generated from this rule
         Uses set of symbols that can be collapsed after the next symbol to be
         consumed (i.e. every symbol from idx + 1 up to and including
         the first that can't be null)
-        :param g: The grammer
+        :param g: The grammar
         :return: The lookahead
         """
         out = set()
@@ -173,8 +173,8 @@ class Node:
         return f'State#{self.stateID}'
 
 
-class LROneGrammer:
-    def __init__(self, g: Grammer):
+class LROneGrammar:
+    def __init__(self, g: Grammar):
         self.g = g
         self.start = Node()
 

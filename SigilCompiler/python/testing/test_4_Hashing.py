@@ -1,6 +1,6 @@
 import unittest
 
-from lr1Grammer import Node, AnnotRule
+from lr1Grammar import Node, AnnotRule
 from rule import Rule
 
 class TestHashing(unittest.TestCase):

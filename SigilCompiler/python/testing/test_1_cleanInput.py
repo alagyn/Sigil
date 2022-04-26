@@ -3,7 +3,7 @@ import os.path
 
 from testConsts import TEST_ROOT
 
-import grammer
+import grammar
 import ebnf_parser
 
 EXPECTED_CLEAN = [

@@ -4,17 +4,17 @@ from typing import Deque, Set
 from pyvis.network import Network
 import matplotlib.pyplot as plt
 
-from lr1Grammer import LROneGrammer, Node
+from lr1Grammar import LROneGrammar, Node
 
-def generateNetwork(grammer: LROneGrammer):
+def generateNetwork(grammar: LROneGrammar):
     net = Network(directed=True, height='100%', width='100%')
 
-    for node in grammer.stateLookup.values():
+    for node in grammar.stateLookup.values():
         net.add_node(node.stateID, f"{node.stateID}\n" + "\n".join(str(rule) for rule in node))
 
     visited: Set[int] = set()
     todo: Deque[Node] = deque()
-    todo.append(grammer.start)
+    todo.append(grammar.start)
 
     labels = {}
 

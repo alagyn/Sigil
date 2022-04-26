@@ -7,7 +7,7 @@ from consts import END, INVALID, EMPTY
 F_Set = Dict[str, Set[str]]
 
 
-class Grammer:
+class Grammar:
     def __init__(self):
         self.terminals: Dict[str, str] = {END: END}
         self.rules: Set[Rule] = set()

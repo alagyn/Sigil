@@ -2,8 +2,8 @@ import re
 from typing import List, Dict, Set, Tuple
 
 from rule import Rule
-from grammer import Grammer
-from lr1Grammer import LROneGrammer
+from grammar import Grammar
+from lr1Grammar import LROneGrammar
 from errors import EBNFError
 from log import logErr, logInfo, logWrn
 import visualizeLR1
@@ -78,9 +78,9 @@ def combineLines(lines: List[str]) -> List[str]:
 
     return ruleLines
 
-def parseGrammer(ruleLines: List[str]) -> Grammer:
+def parseGrammar(ruleLines: List[str]) -> Grammar:
     # List of rules
-    grammer = Grammer()
+    grammar = Grammar()
 
     # Parse rules
     logInfo("Parsing EBNF Rules")
@@ -93,7 +93,7 @@ def parseGrammer(ruleLines: List[str]) -> Grammer:
             if not startFound:
                 logWrn("Epsilon rule declared before start rule")
             nt = match.group(NONTERM)
-            grammer.addNull(nt)
+            grammar.addNull(nt)
             continue
 
         # Terminal
@@ -104,7 +104,7 @@ def parseGrammer(ruleLines: List[str]) -> Grammer:
             # Strip qutoes
             term = term[1:-1]
             try:
-                grammer.addTerminal(nt, term)
+                grammar.addTerminal(nt, term)
             except EBNFError as e:
                 logErr(str(e))
                 errored = True
@@ -118,13 +118,13 @@ def parseGrammer(ruleLines: List[str]) -> Grammer:
 
             r = Rule(nt, defin.split(' '))
             try:
-                grammer.addRule(r)
+                grammar.addRule(r)
             except EBNFError as e:
                 logErr(str(e))
                 errored = True
 
             if not startFound:
-                grammer.setStart(nt)
+                grammar.setStart(nt)
                 startFound = True
 
             continue
@@ -132,22 +132,22 @@ def parseGrammer(ruleLines: List[str]) -> Grammer:
         logErr(f"Invalid rule, skipping: {line}")
         errored = True
 
-    if errored or grammer.basicErrorCheck():
+    if errored or grammar.basicErrorCheck():
         raise EBNFError("Parse errors occured, exitting")
 
-    return grammer
+    return grammar
 
-def parseEBNFFile(filename) -> Grammer:
+def parseEBNFFile(filename) -> Grammar:
     lines = cleanInput(filename)
     ruleLines = combineLines(lines)
-    return parseGrammer(ruleLines)
+    return parseGrammar(ruleLines)
 
 def parse(filename):
 
-    grammer = parseEBNFFile(filename)
-    grammer.computeFirstAndFollow()
+    grammar = parseEBNFFile(filename)
+    grammar.computeFirstAndFollow()
 
-    lr1 = LROneGrammer(grammer)
+    lr1 = LROneGrammar(grammar)
     lr1.compute()
 
     visualizeLR1.generateNetwork(lr1)
