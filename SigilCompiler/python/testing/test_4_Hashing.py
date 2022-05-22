@@ -41,29 +41,24 @@ class TestHashing(unittest.TestCase):
 
         n1 = Node()
         n1.addRule(r1, 0, {'$'})
-        n1.freeze()
 
         n2 = Node()
         n2.addRule(r2, 0, {'$'})
-        n2.freeze()
 
         self.assertEqual(hash(n1), hash(n2), 'Node hashes not equal')
 
         n3 = Node()
         n3.addRule(r2, 1, {'$'})
-        n3.freeze()
 
         self.assertNotEqual(hash(n1), hash(n3))
 
         n4 = Node()
         n4.addRule(r2, 0, {'3'})
-        n4.freeze()
 
         self.assertNotEqual(hash(n1), hash(n4))
 
         n5 = Node()
         n5.addRule(r1, 0, {'$'})
         n5.addRule(r1, 1, {'$'})
-        n5.freeze()
 
         self.assertNotEqual(hash(n1), hash(n5))

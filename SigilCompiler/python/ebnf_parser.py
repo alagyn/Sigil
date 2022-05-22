@@ -3,7 +3,7 @@ from typing import List, Dict, Set, Tuple
 
 from rule import Rule
 from grammar import Grammar
-from lr1Grammar import LROneGrammar
+from lalrGrammar import LALRGrammar
 from errors import EBNFError
 from log import logErr, logInfo, logWrn
 import visualizeLR1
@@ -147,10 +147,10 @@ def parse(filename):
     grammar = parseEBNFFile(filename)
     grammar.computeFirstAndFollow()
 
-    lr1 = LROneGrammar(grammar)
-    lr1.compute()
+    lalrG = LALRGrammar(grammar)
+    lalrG.compute()
 
-    visualizeLR1.generateNetwork(lr1)
+    visualizeLR1.generateNetwork(lalrG)
 
 
 if __name__ == '__main__':

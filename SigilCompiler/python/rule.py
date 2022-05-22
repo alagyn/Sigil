@@ -1,11 +1,25 @@
 
 from typing import List
 
-class Rule:
+class _RuleIter:
+    def __init__(self, s: List[str]):
+        self._idx = -1
+        self._x = s
 
+    def __next__(self):
+        self._idx += 1
+        try:
+            return self._x[self._idx]
+        except IndexError:
+            raise StopIteration
+
+class Rule:
     def __init__(self, nonterm: str, r: List[str]):
         self.nonterm = nonterm
         self.symbols = r
+
+        x = nonterm + "".join(r)
+        self._hash = hash(x)
 
 
     def __eq__(self, other: 'Rule'):
@@ -18,6 +32,9 @@ class Rule:
 
         return self.nonterm == other.nonterm
 
+    def __iter__(self):
+        return _RuleIter(self.symbols)
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
@@ -26,7 +43,7 @@ class Rule:
         return f'[{self.nonterm} = {r}]'
 
     def __hash__(self):
-        return hash(self.nonterm) + sum(hash(x) for x in self.symbols)
+        return self._hash
 
     def compare(self, other) -> int:
         if not isinstance(other, Rule):

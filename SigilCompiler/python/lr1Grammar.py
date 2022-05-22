@@ -4,90 +4,7 @@ from grammar import Grammar
 from rule import Rule
 from consts import END
 from errors import EBNFError
-
-class AnnotRule:
-    def __init__(self, rule: Rule, idx: int, la: Set[str]):
-        self.rule = rule
-        # IDX is idx of symbol AFTER dot, i.e. the idx == the symbol we are checking for
-        self.idx = idx
-        self._la = la
-
-    def __eq__(self, other):
-        if not isinstance(other, AnnotRule):
-            return False
-
-        return hash(self.rule) == hash(other.rule) and self.idx == other.idx
-
-    def combine(self, other: 'AnnotRule') -> bool:
-        """
-        Adds the LA of the other rule. Returns True if it added new items
-        :param other: The rule to combine
-        :return: True if changes occur
-        """
-        new = self._la.union(other._la)
-        if new > self._la:
-            # Return true if self LA is proper superset of other LA
-            self._la = new
-            return True
-        return False
-
-    def indexBeforeEnd(self) -> bool:
-        # dot is before the last symbol, i.e. IDX == len - 1
-        return self.idx == len(self.rule.symbols) - 1
-
-    def indexAtEnd(self) -> bool:
-        return self.idx == len(self.rule.symbols)
-
-    def getNextSym(self) -> str:
-        if self.indexAtEnd():
-            raise EBNFError("Cannot get next symbol, dot at end of input")
-
-        return self.rule.symbols[self.idx]
-
-    def copyLA(self):
-        return set(self._la.copy())
-
-    def refLA(self):
-        return self._la
-
-    def getNewLA(self, g: Grammar) -> Set[str]:
-        """
-        Returns the lookahead for closure rules generated from this rule
-        Uses set of symbols that can be collapsed after the next symbol to be
-        consumed (i.e. every symbol from idx + 1 up to and including
-        the first that can't be null)
-        :param g: The grammar
-        :return: The lookahead
-        """
-        out = set()
-        for i in range(self.idx + 1, len(self.rule.symbols)):
-            out.update(g.first[self.rule.symbols[i]])
-            if self.rule.symbols[i] not in g.nulls:
-                return out
-
-        # If we got here, every symbol after the next can be nulled
-        out.update(self._la)
-        return out
-
-    def lookupHash(self):
-        return hash(self.rule) + hash(self.idx)
-
-    def __hash__(self):
-        return hash(self.rule) + hash(self.idx) + hash(frozenset(self._la))
-
-    def __str__(self):
-        rl = ''
-        for i in range(len(self.rule.symbols)):
-            if i == self.idx:
-                rl += ' .'
-            rl += f' {self.rule.symbols[i]}'
-
-        if self.idx == len(self.rule.symbols):
-            rl += ' .'
-
-        la = ', '.join(self._la)
-        return f'{self.rule.nonterm} ={rl} {{{la}}}'
-
+from annotatedRule import AnnotRule
 
 class _NodeIter:
     def __init__(self, rules: List[AnnotRule]):
@@ -109,7 +26,7 @@ class Node:
         cls._STATE_ID_GEN -= 1
 
     def __init__(self):
-        self._rulesD: Dict[int, AnnotRule] = {}
+        self._rulesD: Dict[AnnotRule, AnnotRule] = {}
         self._rules: List[AnnotRule] = []
 
         self._iterIdx = -1
@@ -120,7 +37,6 @@ class Node:
         Node._STATE_ID_GEN += 1
 
         self._hash = None
-        self._frozenRules = None
 
     def __iter__(self):
         return _NodeIter(self._rules)
@@ -144,24 +60,25 @@ class Node:
         :return: True if a change occurs
         """
         new = AnnotRule(r, idx, la)
-        if self._frozenRules is not None:
-            raise EBNFError(f"Node: {str(self)}\n"
-                            f"Cannot add rule, node is frozen\n"
-                            f"Rule: {str(new)}")
         try:
-            old = self._rulesD[new.lookupHash()]
+            old = self._rulesD[new]
             return old.combine(new)
         except KeyError:
             pass
 
-        self._rulesD[new.lookupHash()] = new
+        self._rulesD[new] = new
         self._rules.append(new)
         return True
 
-    def freeze(self):
-        self._frozenRules = frozenset(self._rules)
-        self._hash = hash(self._frozenRules)
-        del self._rulesD
+    def __eq__(self, other):
+        if not isinstance(other, Node):
+            return False
+
+        for r1, r2 in zip(self._rules, other._rules):
+            if r1 != r2:
+                return False
+
+        return True
 
     def __hash__(self):
         if self._hash is None:
@@ -185,7 +102,7 @@ class LROneGrammar:
             except KeyError:
                 self.ruleLookup[rule.nonterm] = [rule]
 
-        self.stateLookup: dict[int, Node] = {}
+        self.stateLookup: dict[Node, Node] = {}
 
     def makeClosure(self, node: Node):
         """
@@ -215,11 +132,10 @@ class LROneGrammar:
                 # END for rule
             # END for annot rule
         # END while changed
-        node.freeze()
 
     def checkState(self, node: Node) -> Node:
         try:
-            old = self.stateLookup[hash(node)]
+            old = self.stateLookup[node]
             # print(f'Duplicate detected {node.stateID} -> {old.stateID}')
             # Dec Id since this is a duplicate node
             Node.decID()
@@ -227,7 +143,7 @@ class LROneGrammar:
         except KeyError:
             pass
 
-        self.stateLookup[hash(node)] = node
+        self.stateLookup[node] = node
         # Recurse
         self.recurBuildGraph(node)
         return node
@@ -266,7 +182,7 @@ class LROneGrammar:
 
         # print('Closing State#0')
         self.makeClosure(self.start)
-        self.stateLookup[hash(self.start)] = self.start
+        self.stateLookup[self.start] = self.start
 
         # print('Building Graph')
         self.recurBuildGraph(self.start)
