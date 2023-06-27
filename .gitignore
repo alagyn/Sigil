@@ -5,6 +5,8 @@ docs
 *.workspace
 compile_flags.txt
 
+venv
+
 # Prerequisites
 *.d
 

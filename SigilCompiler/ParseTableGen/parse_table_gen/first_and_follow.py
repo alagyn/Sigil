@@ -6,9 +6,6 @@ from parse_table_gen.consts import EMPTY, END
 class FirstAndFollow:
     def __init__(self, grammer: Grammer) -> None:
         self.first: Dict[str, set[str]] = {}
-        self.follow: Dict[str, set[str]] = {}
-
-        self.first: Dict[str, set[str]] = {}
         for symbol in grammer.symbols:
             self.first[symbol] = set()
             if symbol in grammer.nulls:
@@ -40,6 +37,10 @@ class FirstAndFollow:
             # End for rule
         # End while changed
 
+        self.follow: Dict[str, set[str]] = {x.nonterm: set() for x in grammer.rules}
+        for x in grammer.terminals:
+            self.follow[x] = set()
+
         self.follow[grammer.startSymbol] = {END}
 
         changed = True
@@ -57,14 +58,14 @@ class FirstAndFollow:
 
                     if lastEmpty:
                         right = self.follow[curSymbol]
-                        new = left & right
+                        new = left.union(right)
                         if new > right:
                             self.follow[curSymbol] = new
                             changed = True
                         lastEmpty = EMPTY in self.first[curSymbol]
                     if i > 0:
                         prior = rule.symbols[i - 1]
-                        curFirst = self.first[curSymbol] | {EMPTY}
+                        curFirst = self.first[curSymbol].difference({EMPTY})
                         priorFollow = self.follow[prior]
                         new = priorFollow.union(curFirst)
                         if new > priorFollow:
@@ -76,8 +77,6 @@ class FirstAndFollow:
 
         for x in grammer.terminals:
             del self.follow[x]
-
-        del self.first[END]
 
 
 
