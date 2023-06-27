@@ -6,14 +6,15 @@ from grammar import Grammar
 from lalrGrammar import LALRGrammar
 from errors import EBNFError
 from log import logErr, logInfo, logWrn
-import visualizeLR1
 
 NONTERM = 'nonterm'
 DEFIN = 'defin'
 TERM = 'term'
 
 RULE_RE = re.compile(r'(?P<nonterm>\w+) *= *(?P<defin>(\w+ *)+);')
-TERM_RE = re.compile(r'(?P<nonterm>\w+) *= *(?P<term>("[^"]+")|(\'[^\']+\')) *;')
+TERM_RE = re.compile(
+    r'(?P<nonterm>\w+) *= *(?P<term>("[^"]+")|(\'[^\']+\')) *;'
+)
 EPSI_RE = re.compile(r'(?P<nonterm>\w+) *= *EMPTY *;')
 
 COMMENT_RE = re.compile(r'((\'.*\')|(".*")|[^\'"])* *;? *(?P<comment>#.*)')
@@ -46,7 +47,7 @@ def cleanInput(filename) -> List[str]:
             # Strip comments
             if match is not None:
                 start, _ = match.span("comment")
-                line = line[0: start].strip()
+                line = line[0:start].strip()
 
             if len(line) > 0:
                 cleanLines.append(line)
@@ -77,6 +78,7 @@ def combineLines(lines: List[str]) -> List[str]:
         raise EBNFError("Missing final semicolon")
 
     return ruleLines
+
 
 def parseGrammar(ruleLines: List[str]) -> Grammar:
     # List of rules
@@ -137,10 +139,12 @@ def parseGrammar(ruleLines: List[str]) -> Grammar:
 
     return grammar
 
+
 def parseEBNFFile(filename) -> Grammar:
     lines = cleanInput(filename)
     ruleLines = combineLines(lines)
     return parseGrammar(ruleLines)
+
 
 def parse(filename):
 
@@ -150,15 +154,11 @@ def parse(filename):
     lalrG = LALRGrammar(grammar)
     lalrG.compute()
 
-    visualizeLR1.generateNetwork(lalrG)
-
 
 if __name__ == '__main__':
     import sys
 
-
     def _main():
         parse(sys.argv[1])
-
 
     _main()

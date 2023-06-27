@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.23)
 
 project(SigilCompiler LANGUAGES CXX)
 
-add_subdirectory(python py)
 add_subdirectory(src src)
 
 set(CMAKE_BUILD_CONFIGURATION_TYPES Debug Release CACHE STRING "The build type" FORCE)
