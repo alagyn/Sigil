@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple
 from collections import deque
+import itertools
 
 from parse_table_gen.ebnf_grammer import Grammer, Rule
 from parse_table_gen.first_and_follow import FirstAndFollow
@@ -27,7 +28,7 @@ class AnnotRule:
         for i in range(self.parseIndex):
             out += " " + self.rule.symbols[i]
 
-        out += " *"
+        out += " ."
 
         for i in range(self.parseIndex, len(self.rule.symbols)):
             out += " " + self.rule.symbols[i]
@@ -56,7 +57,7 @@ class AnnotRule:
         """
         Check if the dot is just before the last symbol
         """
-        return self.parseIndex == len(self.rule.symbols) - 1
+        return self.parseIndex == len(self.rule.symbols)
 
     def nextSymbol(self) -> str:
         """
@@ -114,7 +115,9 @@ class Node:
         for annotRule in self.rules:
             if annotRule == newRule:
                 return annotRule.combine(newRule)
-        return False
+
+        self.rules.append(newRule)
+        return True
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Node):
@@ -159,6 +162,7 @@ class LALR1Automata:
         self.grammer = g
         self.ff = ff
 
+        # Lookup rules for each nonterminal
         self.ruleLookup: Dict[str, List[Rule]] = {}
         for rule in g.rules:
             try:
@@ -192,6 +196,10 @@ class LALR1Automata:
                             cur.addTrans(symbol, new)
                         if changed and new not in todo:
                             todo.append(new)
+
+        # normalize the node ID's
+        for idx, n in enumerate(self.nodes):
+            n.id = idx
 
     def makeClosure(self, node: Node) -> None:
         """
@@ -239,3 +247,72 @@ class LALR1Automata:
         # If we got here it is a new node
         self.nodes.append(newNode)
         return newNode, True
+
+
+class ParseTable:
+    SHIFT = 'S'
+    REDUCE = 'R'
+    GOTO = 'G'
+    ERROR = 'E'
+    ACCEPT = 'A'
+
+    def __init__(self, automata: LALR1Automata) -> None:
+
+        self.symbolList = list(itertools.chain(automata.ruleLookup.keys(), automata.grammer.terminals.keys()))
+        self.symbolList.append(END)
+
+        self.symbolIDs: Dict[str, int] = {
+            x: idx
+            for idx, x in enumerate(self.symbolList)
+        }
+
+        self.table: List[List[Tuple[str, int]]] = []
+        for node in automata.nodes:
+            curRow: List[Tuple[str, int]] = [(ParseTable.ERROR, 0) for _ in self.symbolIDs]
+            self.table.append(curRow)
+
+            for rule in node.rules:
+                if rule.indexAtEnd():
+                    for terminal in automata.ff.follow[rule.rule.nonterm]:
+                        termID = self.symbolIDs[terminal]
+                        if curRow[termID] != (ParseTable.ERROR, 0):
+                            raise RuntimeError(f"Cannot build parse table, reduce-reduce conflict: {node}, {rule}")
+                        # TODO what to do for the new state????
+                        curRow[termID] = (ParseTable.REDUCE, 0)
+                    continue
+
+                nextSymbol = rule.nextSymbol()
+                nextSymbolID = self.symbolIDs[nextSymbol]
+                nextNode = node.trans[nextSymbol].id
+
+                if nextSymbol in automata.grammer.terminals:
+                    nextAction = ParseTable.SHIFT
+                else:
+                    nextAction = ParseTable.GOTO
+
+                newAction = (nextAction, nextNode)
+                curAction = curRow[nextSymbolID]
+                if curAction != (ParseTable.ERROR, 0) and curAction != newAction:
+                    raise RuntimeError(
+                        f'Cannot build parse table, conflict: {node}, {rule}, symbol: {nextSymbol}, A1: {curRow[nextSymbolID]} A2: {(nextAction, nextNode)}'
+                    )
+
+                curRow[nextSymbolID] = (nextAction, nextNode)
+
+        self.table[0][self.symbolIDs[END]] = (ParseTable.ACCEPT, 0)
+
+    def printTable(self):
+        print("   ", end="")
+        for x in self.symbolList:
+            print(f'{x:10s}', end="")
+        print("")
+
+        for idx, row in enumerate(self.table):
+            print(f'{idx}: ', end="")
+            for x in row:
+                if x[0] == ParseTable.ERROR:
+                    print("          ", end="")
+                else:
+                    print(f'{x[0]}{x[1]}        ', end="")
+            print("")
+        print("")

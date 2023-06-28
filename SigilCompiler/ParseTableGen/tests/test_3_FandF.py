@@ -2,7 +2,7 @@ import unittest
 from typing import Dict
 
 import utils
-from parse_table_gen.ebnf_parser import parse_ebnf_file
+from parse_table_gen.main import parse_ebnf_file
 from parse_table_gen.first_and_follow import FirstAndFollow
 from parse_table_gen.consts import EMPTY
 

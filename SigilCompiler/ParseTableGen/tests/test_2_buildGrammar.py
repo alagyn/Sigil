@@ -1,9 +1,10 @@
 import unittest
 import os.path
 
-from parse_table_gen.ebnf_parser import parse_ebnf_file
+from parse_table_gen.main import parse_ebnf_file
 from parse_table_gen.ebnf_grammer import Rule
 from utils import getTestFilename
+
 
 class TestBuildgrammar(unittest.TestCase):
 
@@ -31,16 +32,14 @@ class TestBuildgrammar(unittest.TestCase):
             self.assertEqual(EXP_TERMS[key], val, 'Terminal definition is not expected')
 
         EXP_RULES = [
-                Rule('PROGRAM', ['stmt']),
-                Rule('stmt', ['name', 'equals_sign', 'integer', 'semicolon']),
-                Rule('stmt', ['open_curly', 'integer', 'close_curly'])
+            Rule('PROGRAM', ['stmt']),
+            Rule('stmt', ['name', 'equals_sign', 'integer', 'semicolon']),
+            Rule('stmt', ['open_curly', 'integer', 'close_curly'])
         ]
 
         self.assertEqual(len(EXP_RULES), len(g.rules), 'Len of rules not equal')
 
         for exp, act in zip(EXP_RULES, g.rules):
             self.assertEqual(exp, act, "Rule definition is not as expected")
-
-
 
     # TODO invalid test files

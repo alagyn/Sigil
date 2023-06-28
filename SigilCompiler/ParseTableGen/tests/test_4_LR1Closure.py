@@ -3,7 +3,7 @@ import unittest
 import utils
 
 from parse_table_gen.lalr1_automata import Node, AnnotRule, LALR1Automata
-from parse_table_gen.ebnf_parser import parse_ebnf_file
+from parse_table_gen.main import parse_ebnf_file
 from parse_table_gen.ebnf_grammer import Grammer, Rule
 from parse_table_gen.first_and_follow import FirstAndFollow
 from parse_table_gen.consts import END
@@ -23,11 +23,6 @@ class TestLALRClosure(unittest.TestCase):
         X = 'X'
         a = 'a'
         b = 'b'
-
-        for x in lalr.nodes:
-            print(x)
-            for r in x.rules:
-                print(r)
 
         r0 = Rule(SP, [S])
         r1 = Rule(S, [X, X])
@@ -54,7 +49,7 @@ class TestLALRClosure(unittest.TestCase):
         n36.addRule(r3, 0, set([a, b, END]))
 
         n5 = Node()
-        n5.addRule(r2, 2, set([END]))
+        n5.addRule(r1, 2, set([END]))
 
         n47 = Node()
         n47.addRule(r3, 1, set([a, b, END]))
@@ -64,7 +59,8 @@ class TestLALRClosure(unittest.TestCase):
 
         EXP_NODES = [n0, n1, n2, n36, n47, n5, n89]
 
-        for node in lalr.nodes:
-            self.assertTrue(node in EXP_NODES, "Missing node")
+        for exp, act in zip(EXP_NODES, lalr.nodes):
+            for expRule, actRule in zip(exp.rules, act.rules):
+                self.assertEqual(expRule, actRule, f"Rule not equal, Exp: {expRule}, Act: {actRule}")
 
         self.assertEqual(len(EXP_NODES), len(lalr.nodes))
