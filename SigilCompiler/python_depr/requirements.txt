@@ -1,3 +1,0 @@
-pyvis~=0.2.0
-matplotlib~=3.4.3
-networkx~=2.5.1

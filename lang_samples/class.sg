@@ -9,23 +9,23 @@ class Vehicle
         int id;
     }
 
-    //Outside access (i.e. public access) is essentially const
-    //Internally it acts like a normal private member
+    # Outside access (i.e. public access) is essentially const
+    # Internally it acts like a normal private member
     readonly
     {
         int gasRemaining;
         int odometer;
     }
     
-    //Shared == c++ protected
-    //Inaccessible from public access, accessible from subclasses
+    # Shared == c++ protected
+    # Inaccessible from public access, accessible from subclasses
     shared
     {
         int gasMax;
     }
     
-    //Common == shared + readonly
-    //Public access is const, subclass access is not
+    # Common == shared + readonly
+    # Public access is const, subclass access is not
     common
     {
         string currentLocation = "asdf";
@@ -39,6 +39,9 @@ class Vehicle
     
     public Vehicle(string name, int gasMax, float mpg)
     {
+        ##
+        This is a multiline comment
+        ##
         this.name = name;
         id = idGen++;
         

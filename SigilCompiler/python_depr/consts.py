@@ -1,5 +1,0 @@
-
-EMPTY = 'EMPTY'
-END = '$'
-
-INVALID = {EMPTY, END}
