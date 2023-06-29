@@ -1,2 +1,2 @@
 EMPTY = "__EMPTY__"
-END = "$"
+END = "__EOF__"

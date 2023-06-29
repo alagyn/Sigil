@@ -4,7 +4,7 @@ docs
 *.project
 *.workspace
 compile_flags.txt
-
+build
 venv
 
 **/__pycache__/**

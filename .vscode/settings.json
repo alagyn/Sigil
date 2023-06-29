@@ -1,4 +1,5 @@
 {
+    "json.schemaDownload.enable": true,
     "python.testing.unittestArgs": [
         "-v",
         "-s",
@@ -12,5 +13,10 @@
     "python.analysis.typeCheckingMode": "basic",
     "python.linting.cwd": "${workspaceRoot}/SigilCompiler/ParseTableGen",
     "python.formatting.provider": "yapf",
-    "cmake.sourceDirectory": "/home/alagyn/bdd/Sigil/SigilCompiler",
+    "cmake.sourceDirectory": "/home/alagyn/bdd/Sigil",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "files.associations": {
+        ".style.yapf": "properties",
+        "iostream": "cpp"
+    },
 }

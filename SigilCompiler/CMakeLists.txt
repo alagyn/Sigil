@@ -1,16 +1,22 @@
-cmake_minimum_required(VERSION 3.26)
 
-project(Sigil LANGUAGES CXX)
+project(sgc)
 
 set(SGC_SRC
     src/main.cpp
     src/scanner.cpp
 )
 
-add_executable(sgc ${SGC_SRC})
+add_executable(${PROJECT_NAME} ${SGC_SRC})
 
-target_include_directories(sgc
+target_include_directories(${PROJECT_NAME}
     PUBLIC
-        "include"
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(${PROJECT_NAME}
+    PUBLIC
+        Boost::program_options
+        Boost::regex
+        Boost::filesystem
 )
 
