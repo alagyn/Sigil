@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
         std::string tokenStr;
         symbol = scanner.nextToken(tokenStr);
         cout << sigil::TERMINAL_LOOKUP.at(symbol) << " ";
-        if(symbol == sigil::Symbol::semicolon)
+        if(symbol == sigil::Symbol::SEMICOLON)
         {
             cout << "\n";
         }

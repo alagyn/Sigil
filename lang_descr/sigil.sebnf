@@ -1,56 +1,58 @@
-# Char declarations
-semicolon = ";";
-open_curly = "{";
-close_curly = "}";
-open_paren = "\(";
-close_paren = "\)";
-open_square_bracket = "\[";
-close_square_bracket = "\]";
-comma = ",";
-
-# Operators
-equals_sign = "=";
-plus_sign = "\+";
-minus_sign = "-";
-star_sign = "\*";
-
-# type names
-type_array = "array";
-type_list = "list";
-type_map = "map";
-type_set = "set";
-
-type
-    = type_array
-    | type_list
-    | type_map
-    | type_set
-    | name;
-
-# Keywords
-kw_for = "for";
-kw_in = "in";
-kw_if = "if";
-kw_return = "return";
-
-kw_class = "class";
-kw_private = "private";
-
-# Literals
-lit_integer = '[1-9]\d*';
-lit_float = "\d+.\d+"; # TODO scientific notation?
-
-double_quote_string = '"([^"]|(\\"))*"';
-single_quote_string = "'([^']|(\\'))*'";
-lit_string
-    = double_quote_string
-    | single_quote_string;
-
-name = "[a-zA-Z][a-zA-Z0-9_]*";
-
-program 
+# The starting rule, must be first
+program
     = definition
     | program;
+
+# Char declarations
+SEMICOLON = ";";
+OPEN_CURLY = "{";
+CLOSE_CURLY = "}";
+OPEN_PAREN = "\(";
+CLOSE_PAREN = "\)";
+OPEN_SQUARE = "\[";
+CLOSE_SQUARE = "\]";
+COMMA = ",";
+
+# Operators
+OP_EQUALS = "=";
+OP_PLUS = "\+";
+OP_MINUS = "-";
+OP_STAR = "\*";
+
+# Keywords
+KW_FOR = "for";
+KW_IN = "in";
+KW_IF = "if";
+KW_ELSE = "else";
+KW_RETURN = "return";
+
+KW_CLASS = "class";
+KW_PRIVATE = "private";
+
+# Literals
+LIT_INTEGER = '[1-9]\d*';
+LIT_FLOAT = "\d+.\d+"; # TODO scientific notation?
+
+DOUBLE_QUOTE_STR = '"([^"]|(\\"))*"';
+SINGLE_QUOTE_STR = "'([^']|(\\'))*'";
+lit_string
+    = DOUBLE_QUOTE_STR
+    | SINGLE_QUOTE_STR;
+
+NAME = "[a-zA-Z][a-zA-Z0-9_]*";
+
+# type names
+TYPE_ARRAY = "array";
+TYPE_LIST = "list";
+TYPE_MAP = "map";
+TYPE_SET = "set";
+
+type
+    = TYPE_ARRAY
+    | TYPE_LIST
+    | TYPE_MAP
+    | TYPE_SET
+    | NAME;
 
 definition
     = func_definition
@@ -58,41 +60,40 @@ definition
     #| class_definition;
     | EMPTY;
 
-func_definition = type name open_paren arguments close_paren open_curly statements close_curly;
+func_definition = type NAME OPEN_PAREN arguments CLOSE_PAREN OPEN_CURLY statements CLOSE_CURLY;
 arguments
     = argument
-    | argument comma argument
-    | EMTPY;
+    | argument COMMA argument
+    | EMPTY;
 
-argument = type name default_value;
+argument = type NAME default_value;
 # TODO is expression the right thing here? The value should be evaluatable at compile time
 default_value
-    = equals_sign expression
+    = OP_EQUALS expression
     | EMPTY;
 
 statements
-    = statement statement
+    = statement
+    | statement statements # Recursion
     | EMPTY;
 
+statement = statement_body SEMICOLON; # This enforces semicolons for all statements
 
-statement = statement_body semicolon; # This enforces semicolons for all statements
 
 statement_body
     = assignment
     | if_statement
     | return_statement;
 
-if_statement = kw_if expression;
+if_statement = KW_IF expression;
 
-return_statement = kw_return expression;
+return_statement = KW_RETURN expression;
 
-assignment = optional_type name equals_sign expression semicolon;
+assignment = optional_type NAME OP_EQUALS expression SEMICOLON;
 
 optional_type
-    = name
+    = NAME
     | EMPTY;
 
-
-
-expression = name;
+expression = NAME;
 

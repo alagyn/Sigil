@@ -3,6 +3,15 @@
     "name": "Sigil EBNF",
     "patterns": [
         {
+            "include": "#keywords"
+        },
+        {
+            "include": "#terminals"
+        },
+        {
+            "include": "#nonterminals"
+        },
+        {
             "include": "#string-double"
         },
         {
@@ -10,12 +19,21 @@
         },
         {
             "include": "#comment"
-        },
-        {
-            "include": "#operator"
         }
     ],
     "repository": {
+        "keywords": {
+            "name": "keyword.sebnf",
+            "match": "EMPTY|=|\\||;"
+        },
+        "terminals": {
+            "name": "entity.name.class.sebnf",
+            "match": "[A-Z_]+"
+        },
+        "nonterminals": {
+            "name": "entity.name.sebnf",
+            "match": "[a-z_]+"
+        },
         "string-double": {
             "name": "string.regexp.double.sebnf",
             "begin": "\"",
@@ -42,10 +60,6 @@
             "name": "comment.line.sebnf",
             "begin": "#",
             "end": "\n"
-        },
-        "operator": {
-            "name": "keyword.operator.sebnf",
-            "match": "=|\\||;"
         }
     },
     "scopeName": "source.sebnf"

@@ -81,7 +81,6 @@ class Grammer:
 
 
 TERMINAL_RE = re.compile(r'(?P<name>\w+)\s*=\s*(?P<regex>(\'[^\']+\')|("[^"]+"));')
-EMPTY_RE = re.compile(r'(?P<nonterm>\w+)\s*=\s*EMPTY\s*;')
 RULE_RE = re.compile(r'(?P<nonterm>\w+)\s*=\s*(?P<symbols>(\w+(\s+\w+)*)(\s*\|\s*\w+(\s+\w+)*)*);')
 
 
@@ -109,12 +108,6 @@ def parse_grammer(lines: List[str]) -> Grammer:
             terminalNames.add(name)
             continue
 
-        m = EMPTY_RE.fullmatch(line)
-        if m is not None:
-            nonterm = m.group('nonterm')
-            nulls.add(nonterm)
-            continue
-
         m = RULE_RE.fullmatch(line)
         if m is not None:
             nonterm = m.group("nonterm")
@@ -126,8 +119,18 @@ def parse_grammer(lines: List[str]) -> Grammer:
                     x = x.strip()
                     if len(x) > 0:
                         symbols.append(x)
-                nonterminals.add(nonterm)
-                rules.append(Rule(nonterm, symbols))
+
+                gotNull = False
+                for x in symbols:
+                    if x == "EMPTY":
+                        if len(symbols) > 1:
+                            raise RuntimeError("EMPTY must be specified in it's own rule")
+                        nulls.add(nonterm)
+                        gotNull = True
+
+                if not gotNull:
+                    nonterminals.add(nonterm)
+                    rules.append(Rule(nonterm, symbols))
             continue
 
         print("Invalid line:", line)

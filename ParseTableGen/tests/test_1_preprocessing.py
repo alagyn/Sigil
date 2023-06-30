@@ -18,7 +18,8 @@ EXPECTED_CLEAN = [
     'PROGRAM   = stmt;',
     'stmt =   name equals_sign integer',
     'semicolon',
-    '| open_curly integer   close_curly;'
+    '| open_curly integer   close_curly',
+    "| EMPTY;"
 ]
 
 EXPECTED_COMBINED = [
@@ -32,7 +33,7 @@ EXPECTED_COMBINED = [
     'name = "[a-zA-Z][a-zA-Z0-9_]*";',
     "integer = '[1-9][0-9]*';",
     'PROGRAM   = stmt;',
-    'stmt =   name equals_sign integer semicolon | open_curly integer   close_curly;'
+    'stmt =   name equals_sign integer semicolon | open_curly integer   close_curly | EMPTY;'
 ]
 
 
