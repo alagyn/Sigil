@@ -1,10 +1,8 @@
 cmake_minimum_required(VERSION 3.26)
 
-project(Sigil LANGUAGES CXX)
+project(Sigil)
 
-find_package(Boost 1.82.0 
-    REQUIRED
-    COMPONENTS program_options regex filesystem
-)
+set(GRAMMER_FILE "${CMAKE_SOURCE_DIR}/lang_descr/sigil.ebnf" CACHE FILEPATH "The grammer file")
 
+add_subdirectory(ParseTableGen)
 add_subdirectory(SigilCompiler)

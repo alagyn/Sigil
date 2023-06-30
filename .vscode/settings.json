@@ -19,4 +19,5 @@
         ".style.yapf": "properties",
         "iostream": "cpp"
     },
+    "cmake.generator": "Unix Makefiles"
 }

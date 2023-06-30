@@ -97,7 +97,11 @@ def parse_grammer(lines: List[str]) -> Grammer:
         m = TERMINAL_RE.fullmatch(line)
         if m is not None:
             name = m.group("name")
-            regex = m.group("regex").strip("\"'")
+            regex = m.group("regex")
+            if regex.startswith('"'):
+                regex = regex.strip('"')
+            else:
+                regex = regex.strip("'")
             if name in terminalNames:
                 raise RuntimeError(f'Duplicate terminal definition: "{name}"')
 

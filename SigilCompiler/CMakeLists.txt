@@ -1,6 +1,11 @@
 
 project(sgc)
 
+find_package(Boost 1.82.0 
+    REQUIRED
+    COMPONENTS program_options regex filesystem
+)
+
 set(SGC_SRC
     src/main.cpp
     src/scanner.cpp
@@ -19,4 +24,6 @@ target_link_libraries(${PROJECT_NAME}
         Boost::regex
         Boost::filesystem
 )
+
+add_dependencies(${PROJECT_NAME} ParseTableGen)
 
