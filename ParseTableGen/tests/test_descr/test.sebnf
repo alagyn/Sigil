@@ -13,5 +13,5 @@ integer = '[1-9][0-9]*';
 
 PROGRAM   = stmt;
 stmt =   name equals_sign integer # this is totally not a comment
-    semicolon;
-stmt = open_curly integer   close_curly;
+    semicolon
+    | open_curly integer   close_curly;

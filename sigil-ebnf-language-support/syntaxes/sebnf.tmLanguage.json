@@ -1,0 +1,52 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Sigil EBNF",
+    "patterns": [
+        {
+            "include": "#string-double"
+        },
+        {
+            "include": "#string-single"
+        },
+        {
+            "include": "#comment"
+        },
+        {
+            "include": "#operator"
+        }
+    ],
+    "repository": {
+        "string-double": {
+            "name": "string.regexp.double.sebnf",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.sebnf",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        "string-single": {
+            "name": "string.regexp.single.sebnf",
+            "begin": "'",
+            "end": "'",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.sebnf",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        "comment": {
+            "name": "comment.line.sebnf",
+            "begin": "#",
+            "end": "\n"
+        },
+        "operator": {
+            "name": "keyword.operator.sebnf",
+            "match": "=|\\||;"
+        }
+    },
+    "scopeName": "source.sebnf"
+}

@@ -82,7 +82,7 @@ class Grammer:
 
 TERMINAL_RE = re.compile(r'(?P<name>\w+)\s*=\s*(?P<regex>(\'[^\']+\')|("[^"]+"));')
 EMPTY_RE = re.compile(r'(?P<nonterm>\w+)\s*=\s*EMPTY\s*;')
-RULE_RE = re.compile(r'(?P<nonterm>\w+)\s*=\s*(?P<symbols>\w+(\s+\w+)*);')
+RULE_RE = re.compile(r'(?P<nonterm>\w+)\s*=\s*(?P<symbols>(\w+(\s+\w+)*)(\s*\|\s*\w+(\s+\w+)*)*);')
 
 
 def parse_grammer(lines: List[str]) -> Grammer:
@@ -118,14 +118,16 @@ def parse_grammer(lines: List[str]) -> Grammer:
         m = RULE_RE.fullmatch(line)
         if m is not None:
             nonterm = m.group("nonterm")
-            symbol_str = m.group("symbols")
-            symbols = []
-            for x in symbol_str.split(" "):
-                x = x.strip()
-                if len(x) > 0:
-                    symbols.append(x)
-            nonterminals.add(nonterm)
-            rules.append(Rule(nonterm, symbols))
+            rule_list = m.group("symbols").split('|')
+            for symbol_str in rule_list:
+                symbol_str = symbol_str.strip()
+                symbols = []
+                for x in symbol_str.split(" "):
+                    x = x.strip()
+                    if len(x) > 0:
+                        symbols.append(x)
+                nonterminals.add(nonterm)
+                rules.append(Rule(nonterm, symbols))
             continue
 
         print("Invalid line:", line)

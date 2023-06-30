@@ -9,7 +9,7 @@ from utils import getTestFilename
 class TestBuildgrammar(unittest.TestCase):
 
     def test_buildgrammar1(self):
-        testFile = getTestFilename('test.ebnf')
+        testFile = getTestFilename('test.sebnf')
 
         g = parse_ebnf_file(testFile)
 
@@ -17,8 +17,8 @@ class TestBuildgrammar(unittest.TestCase):
             'semicolon': ';',
             'open_curly': "{",
             'close_curly': "}",
-            'open_paren': "(",
-            'close_paren': ")",
+            'open_paren': r"\(",
+            'close_paren': r"\)",
             'equals_sign': "=",
             'pound': "#",
             'name': "[a-zA-Z][a-zA-Z0-9_]*",

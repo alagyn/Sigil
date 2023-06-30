@@ -4,7 +4,7 @@ from typing import Dict
 import utils
 from parse_table_gen.main import parse_ebnf_file
 from parse_table_gen.first_and_follow import FirstAndFollow
-from parse_table_gen.consts import EMPTY
+from parse_table_gen.consts import EMPTY, END
 
 
 class TestFirstAndFollow(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestFirstAndFollow(unittest.TestCase):
         """
         From compiler book by Thain
         """
-        testFile = utils.getTestFilename("FandFtest1.ebnf")
+        testFile = utils.getTestFilename("FandFtest1.sebnf")
         grammer = parse_ebnf_file(testFile)
         ff = FirstAndFollow(grammer)
 
@@ -43,12 +43,12 @@ class TestFirstAndFollow(unittest.TestCase):
         self._checkSet("First", EXP_FIRST, ff.first)
 
         EXP_FOLLOW = {
-            'P': {'$'},
-            'E': {'close_p', '$'},
-            'EP': {'close_p', '$'},
-            'T': {'close_p', 'plus', '$'},
-            'TP': {'plus', 'close_p', '$'},
-            'F': {'plus', 'star', 'close_p', '$'}
+            'P': {END},
+            'E': {'close_p', END},
+            'EP': {'close_p', END},
+            'T': {'close_p', 'plus', END},
+            'TP': {'plus', 'close_p', END},
+            'F': {'plus', 'star', 'close_p', END}
         }
 
         self._checkSet("Follow", EXP_FOLLOW, ff.follow)
@@ -57,7 +57,7 @@ class TestFirstAndFollow(unittest.TestCase):
         """
         Test from https://people.cs.pitt.edu/~jmisurda/teaching/cs1622/handouts/cs1622-first_and_follow.pdf
         """
-        testFile = utils.getTestFilename('FandFtest2.ebnf')
+        testFile = utils.getTestFilename('FandFtest2.sebnf')
         g = parse_ebnf_file(testFile)
 
         ff = FirstAndFollow(g)
@@ -77,7 +77,7 @@ class TestFirstAndFollow(unittest.TestCase):
         self._checkSet("First", EXP_FIRST, ff.first)
 
         EXP_FOLLOW = {
-            'Y': {'close_p', '$', 'plus'}, 'X': {'close_p', '$'}, 'T': {'close_p', '$', 'plus'}, 'E': {'close_p', '$'}
+            'Y': {'close_p', END, 'plus'}, 'X': {'close_p', END}, 'T': {'close_p', END, 'plus'}, 'E': {'close_p', END}
         }
 
         self._checkSet("Follow", EXP_FOLLOW, ff.follow)

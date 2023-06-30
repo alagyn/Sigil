@@ -12,7 +12,7 @@ from parse_table_gen.consts import END
 class TestLALRClosure(unittest.TestCase):
 
     def test_Closure(self):
-        testfile = utils.getTestFilename('LALR1Test.ebnf')
+        testfile = utils.getTestFilename('LALR1Test.sebnf')
         grammer = parse_ebnf_file(testfile)
         ff = FirstAndFollow(grammer)
 
