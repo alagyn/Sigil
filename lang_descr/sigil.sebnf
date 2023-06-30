@@ -58,42 +58,63 @@ definition
     = func_definition
     #| var_definition;
     #| class_definition;
-    | EMPTY;
+    | EMPTY
+    ;
 
-func_definition = type NAME OPEN_PAREN arguments CLOSE_PAREN OPEN_CURLY statements CLOSE_CURLY;
-arguments
+func_definition = type NAME OPEN_PAREN arg_definitions CLOSE_PAREN OPEN_CURLY statements CLOSE_CURLY;
+arg_definitions
     = argument
     | argument COMMA argument
-    | EMPTY;
+    | EMPTY
+    ;
 
 argument = type NAME default_value;
 # TODO is expression the right thing here? The value should be evaluatable at compile time
 default_value
     = OP_EQUALS expression
-    | EMPTY;
+    | EMPTY
+    ;
 
 statements
     = statement
     | statement statements # Recursion
-    | EMPTY;
+    | EMPTY
+    ;
 
-statement = statement_body SEMICOLON; # This enforces semicolons for all statements
+statement
+    = statement_body SEMICOLON # This enforces semicolons for all simple statements
+    | if_statement
+    ;
 
 
 statement_body
     = assignment
-    | if_statement
-    | return_statement;
+    | return_statement
+    | expression
+    ;
 
-if_statement = KW_IF expression;
+if_statement = KW_IF expression OPEN_CURLY statements CLOSE_CURLY else_statement;
+else_statement
+    = KW_ELSE OPEN_CURLY statements CLOSE_CURLY
+    | KW_ELSE if_statement; # This will recurse for more else-ifs
 
 return_statement = KW_RETURN expression;
 
-assignment = optional_type NAME OP_EQUALS expression SEMICOLON;
+assignment = optional_type NAME OP_EQUALS expression;
 
 optional_type
-    = NAME
+    = type
     | EMPTY;
 
-expression = NAME;
+expression
+    = function_call
+    | NAME
+    ;
+
+function_call = name OPEN_PAREN args CLOSE_PAREN;
+args
+    = expression
+    | expression COMMA args
+    | EMPTY
+    ;
 
