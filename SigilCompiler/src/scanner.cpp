@@ -6,12 +6,14 @@
 
 #include <boost/regex.h>
 
+#include <inc/ParseTable.h>
+
 using namespace std;
 
 namespace sigil {
     Scanner::Scanner(string filename)
         : handle(filename)
-        , curLineNum(0)
+        , curLineNum(1)
         , curCharNum(0)
     {
     }
@@ -24,14 +26,17 @@ namespace sigil {
         }
     }
 
-    Symbol Scanner::nextToken(std::string& out)
+    ParseToken Scanner::nextToken()
     {
+        ParseToken out;
+        out.lineNum = curLineNum;
+        out.charNum = curCharNum;
+
         if(handle.eof())
         {
-            return Symbol::__EOF__;
+            out.symbol = Symbol::__EOF__;
+            return out;
         }
-
-        out.clear();
 
         // Initialize set of available terminals
         list<const Terminal*> availableTerminals;
@@ -53,7 +58,15 @@ namespace sigil {
                 // If we are at EOF and we have found a match
                 if(foundMatch)
                 {
-                    return availableTerminals.front()->id;
+                    for(auto& x : TERMINALS)
+                    {
+                        if(boost::regex_match(out.text, x.re))
+                        {
+                            // Take the first that matches
+                            out.symbol = x.id;
+                        }
+                    }
+                    return out;
                 }
                 else
                 {
@@ -61,6 +74,7 @@ namespace sigil {
                 }
             }
             ++curCharNum;
+            ++out.charNum;
 
             // Handle windows/mac line endings
             if(nextChar == '\r')
@@ -81,102 +95,68 @@ namespace sigil {
             if(!hitWhitespace)
             {
                 // Don't include whitespace in the char
-                out.push_back(nextChar);
+                out.text.push_back(nextChar);
             }
 
-            /*
-                Copy the list
-                We need to do this so that if the current char
-                causes all available matches to be pruned we can still
-                see what was available and take the first option
-            */
-            list<const Terminal*> prunedList = availableTerminals;
-
-            auto iter = prunedList.begin();
-            // Manually control iteration for deletes
-            while(iter != prunedList.end())
+            bool foundNewMatch = false;
+            for(auto& t : TERMINALS)
             {
-                const Terminal* t = *iter;
-
-                if(boost::regex_match(out, t->re))
+                if(boost::regex_match(out.text, t.re))
                 {
-                    foundMatch = true;
-                    ++iter;
-                }
-                // If it doesn't match and we have gotten a match before, prune it
-                else if(foundMatch)
-                {
-                    auto curIter = iter;
-                    ++iter;
-                    // Remove this from the set
-                    prunedList.erase(curIter);
-                }
-                else
-                {
-                    // Else just go to the next terminal
-                    ++iter;
+                    foundNewMatch = true;
+                    // Short circuit. We only need to see if a single one matches
+                    break;
                 }
             }
 
             if(nextChar == '\n')
             {
                 ++curLineNum;
+                ++out.lineNum;
                 curCharNum = 0;
             }
 
-            if(foundMatch)
+            // If we haven't gotten a match yet and we just found a new one
+            if(!foundMatch && foundNewMatch)
             {
-                // The currentChar pruned every option
-                if(prunedList.empty())
-                {
-                    // Therefore we have found the maximal-munch
-                    // We need to unget the last char so we don't consume it
-                    if(!hitWhitespace)
-                    {
-                        handle.unget();
-                        out.pop_back();
-                    }
-
-                    /*
-                        If we happen to prune everything in one go, we cannot
-                       assume that every terminal in the prior set was valid in
-                       the first place therefore check each again and take the
-                       first that matches
-                    */
-                    for(auto term : availableTerminals)
-                    {
-                        if(boost::regex_match(out, term->re))
-                        {
-                            return term->id;
-                        }
-                    }
-
-                    // If we got here something bad happened and nothing matched
-                    std::stringstream ss;
-                    ss << "Bad token: '" << out << "'";
-                    throw std::runtime_error(ss.str());
-                }
-                // Or we hit whitespace but we didn't prune everything
-                if(hitWhitespace)
-                {
-                    // Therefore take the first match in the pruned list
-                    return prunedList.front()->id;
-                }
+                // Set foundMatch to true
+                foundMatch = true;
             }
-
-            //Else, we haven't matched anything yet, continue...
-            // TODO have a max char limit?
-
-            // Only copy if we have found a match and we pruned something
-            if(foundMatch && availableTerminals.size() != prunedList.size())
+            // Else if we previously found a match and then stopped or we hit whitespace
+            else if(foundMatch && (!foundNewMatch || hitWhitespace))
             {
-                availableTerminals = prunedList;
+                // Therefore we have found the maximal-munch
+                if(!hitWhitespace)
+                {
+                    // We need to unget the last char so we don't consume it
+                    // we already skip whitespace
+                    handle.unget();
+                    out.text.pop_back();
+                }
+
+                /*
+                    Find the first terminal that matches
+                */
+                for(auto term : availableTerminals)
+                {
+                    if(boost::regex_match(out.text, term->re))
+                    {
+                        out.symbol = term->id;
+                        return out;
+                    }
+                }
+
+                // If we got here something bad happened and nothing matched
+                std::stringstream ss;
+                ss << "Bad token: '" << out.text << "'";
+                throw std::runtime_error(ss.str());
             }
         }
 
         // We only got here if there was an EOF
         // Return EOF which will error later?
         // TODO make sure this is the case?
-        return Symbol::__EOF__;
+        out.symbol = Symbol::__EOF__;
+        return out;
     };
 } //namespace sigil

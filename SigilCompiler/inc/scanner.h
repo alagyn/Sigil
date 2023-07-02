@@ -3,17 +3,26 @@
 #include <fstream>
 #include <string>
 
-#include <inc/ParseTable.h>
-
 namespace sigil {
 
+    enum class Symbol;
+
+    typedef struct
+    {
+        Symbol symbol;
+        std::string text;
+        unsigned lineNum;
+        unsigned charNum;
+    } ParseToken;
+
     class Scanner
+
     {
     public:
         Scanner(std::string filename);
         ~Scanner();
 
-        Symbol nextToken(std::string& out);
+        ParseToken nextToken();
 
     private:
         std::fstream handle;

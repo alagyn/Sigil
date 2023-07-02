@@ -1,5 +1,5 @@
 
-int funcName(string arg1, int arg2)
+int funcName(str arg1, int arg2)
 {
     
 }

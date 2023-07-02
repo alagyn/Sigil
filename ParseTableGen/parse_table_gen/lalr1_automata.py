@@ -33,11 +33,21 @@ class AnnotRule:
         for i in range(self.parseIndex, len(self.rule.symbols)):
             out += " " + self.rule.symbols[i]
 
+        out += f"  LA: {self.lookAhead}"
+
         return out
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AnnotRule):
             return False
+
+        return self.canCombine(other) and self.lookAhead == other.lookAhead
+
+    def canCombine(self, other: 'AnnotRule'):
+        """
+        Checks if the rule can be combined with another
+        Chcks equality of the underlying rule and the parse index
+        """
 
         return self.rule == other.rule and self.parseIndex == other.parseIndex
 
@@ -47,6 +57,8 @@ class AnnotRule:
         :param other: The rule to combine
         :return: True if look ahead was changed
         """
+        if not self.canCombine(other):
+            raise RuntimeError("Attempting to combine invalid rules")
         new = self.lookAhead.union(other.lookAhead)
         if new > self.lookAhead:
             self.lookAhead = new
@@ -90,17 +102,15 @@ class AnnotRule:
 
 
 class Node:
-    NODE_ID_GEN = 0
 
-    def __init__(self) -> None:
-        self.id = Node.NODE_ID_GEN
-        Node.NODE_ID_GEN += 1
+    def __init__(self, id: int) -> None:
+        self.id = id
         self.rules: List[AnnotRule] = []
         # Map of transitions
         self.trans: Dict[str, Node] = {}
 
     def __str__(self) -> str:
-        return f'Node#{self.id}, num rules: {len(self.rules)}'
+        return f'Node#{self.id}'
 
     def addRule(self, rule: Rule, parseIndex: int, lookAhead: set[str]) -> bool:
         """
@@ -113,7 +123,7 @@ class Node:
         """
         newRule = AnnotRule(rule, parseIndex, lookAhead)
         for annotRule in self.rules:
-            if annotRule == newRule:
+            if annotRule.canCombine(newRule):
                 return annotRule.combine(newRule)
 
         self.rules.append(newRule)
@@ -132,11 +142,21 @@ class Node:
 
         return True
 
+    def canCombine(self, other: 'Node') -> bool:
+        if len(self.rules) != len(other.rules):
+            return False
+
+        for r1, r2 in zip(self.rules, other.rules):
+            if not r1.canCombine(r2):
+                return False
+
+        return True
+
     def combine(self, other: 'Node') -> bool:
         out = False
+        if not self.canCombine(other):
+            raise RuntimeError("Attempting to combine unequal nodes")
         for ar1, ar2 in zip(self.rules, other.rules):
-            if ar1 != ar2:
-                raise RuntimeError("Attempting to combine unequal nodes")
             if ar1.combine(ar2):
                 out = True
 
@@ -157,7 +177,10 @@ class Node:
 class LALR1Automata:
 
     def __init__(self, g: Grammer, ff: FirstAndFollow) -> None:
-        self.start = Node()
+        # Start node is ID 0
+        self.start = Node(0)
+        # start IDs at 1
+        self.nodeIDs = 1
 
         self.grammer = g
         self.ff = ff
@@ -230,7 +253,8 @@ class LALR1Automata:
         # End while changed
 
     def makeNewNode(self, curNode: Node, symbol: str) -> Node:
-        newNode = Node()
+        newNode = Node(self.nodeIDs)
+        self.nodeIDs += 1
 
         for annotR in curNode.rules:
             if not annotR.indexAtEnd() and annotR.nextSymbol() == symbol:
@@ -241,7 +265,9 @@ class LALR1Automata:
 
     def resolveDupes(self, newNode: Node) -> Tuple[Node, bool]:
         for node in self.nodes:
-            if node == newNode:
+            if node.canCombine(newNode):
+                # Decrement the ID
+                self.nodeIDs -= 1
                 return node, node.combine(newNode)
 
         # If we got here it is a new node
@@ -258,7 +284,12 @@ class ParseTable:
 
     def __init__(self, automata: LALR1Automata) -> None:
 
-        self.symbolList = list(itertools.chain(automata.ruleLookup.keys(), automata.grammer.terminals.keys()))
+        self.symbolList = [automata.grammer.startSymbol]
+        for x in sorted(automata.ruleLookup.keys()):
+            if x != automata.grammer.startSymbol:
+                self.symbolList.append(x)
+
+        self.symbolList.extend([x[0] for x in automata.grammer.terminalList])
         self.symbolList.append(END)
 
         self.symbolIDs: Dict[str, int] = {
@@ -277,8 +308,8 @@ class ParseTable:
                         termID = self.symbolIDs[terminal]
                         if curRow[termID] != (ParseTable.ERROR, 0):
                             raise RuntimeError(f"Cannot build parse table, reduce-reduce conflict: {node}, {rule}")
-                        # TODO what to do for the new state????
-                        curRow[termID] = (ParseTable.REDUCE, 0)
+
+                        curRow[termID] = (ParseTable.REDUCE, rule.rule.id)
                     continue
 
                 nextSymbol = rule.nextSymbol()
@@ -298,8 +329,10 @@ class ParseTable:
                     )
 
                 curRow[nextSymbolID] = (nextAction, nextNode)
+            # End for rule in node
+        # End for node in automata
 
-        self.table[0][self.symbolIDs[END]] = (ParseTable.ACCEPT, 0)
+        self.table[0][0] = (ParseTable.ACCEPT, 0)
 
     def printTable(self):
         print("   ", end="")

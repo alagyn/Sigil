@@ -1,7 +1,10 @@
 # The starting rule, must be first
-program
+program = definitions;
+definitions
     = definition
-    | program;
+    | definition definitions
+    | EMPTY
+    ;
 
 # Char declarations
 SEMICOLON = ";";
@@ -18,6 +21,9 @@ OP_EQUALS = "=";
 OP_PLUS = "\+";
 OP_MINUS = "-";
 OP_STAR = "\*";
+OP_SLASH = "/";
+OP_POW = "\*\*";
+OP_DOT = '\.';
 
 # Keywords
 KW_FOR = "for";
@@ -25,6 +31,7 @@ KW_IN = "in";
 KW_IF = "if";
 KW_ELSE = "else";
 KW_RETURN = "return";
+KW_NOT = "not";
 
 KW_CLASS = "class";
 KW_PRIVATE = "private";
@@ -39,20 +46,32 @@ lit_string
     = DOUBLE_QUOTE_STR
     | SINGLE_QUOTE_STR;
 
-NAME = "[a-zA-Z][a-zA-Z0-9_]*";
+literal
+    = LIT_INTEGER
+    | LIT_FLOAT
+    | lit_string
+    ;
 
 # type names
 TYPE_ARRAY = "array";
 TYPE_LIST = "list";
 TYPE_MAP = "map";
 TYPE_SET = "set";
+TYPE_STR = "str";
+TYPE_INT = "int";
 
 type
     = TYPE_ARRAY
     | TYPE_LIST
     | TYPE_MAP
     | TYPE_SET
-    | NAME;
+    | TYPE_STR
+    | TYPE_INT
+    | NAME
+    ;
+
+# This goes after all the builtins
+NAME = "[a-zA-Z][a-zA-Z0-9_]*";
 
 definition
     = func_definition
@@ -61,10 +80,13 @@ definition
     | EMPTY
     ;
 
-func_definition = type NAME OPEN_PAREN arg_definitions CLOSE_PAREN OPEN_CURLY statements CLOSE_CURLY;
+# Generic curly bracket body
+body = OPEN_CURLY statements CLOSE_CURLY;
+
+func_definition = type NAME OPEN_PAREN arg_definitions CLOSE_PAREN body;
 arg_definitions
     = argument
-    | argument COMMA argument
+    | argument COMMA arg_definitions
     | EMPTY
     ;
 
@@ -93,10 +115,11 @@ statement_body
     | expression
     ;
 
-if_statement = KW_IF expression OPEN_CURLY statements CLOSE_CURLY else_statement;
+if_statement = KW_IF expression body else_statement;
 else_statement
-    = KW_ELSE OPEN_CURLY statements CLOSE_CURLY
-    | KW_ELSE if_statement; # This will recurse for more else-ifs
+    = KW_ELSE body
+    | KW_ELSE if_statement # This will recurse for more else-ifs
+    ;
 
 return_statement = KW_RETURN expression;
 
@@ -106,12 +129,30 @@ optional_type
     = type
     | EMPTY;
 
+# Expression, defines the order of operations
 expression
-    = function_call
+    = expression OP_PLUS term
+    | expression OP_MINUS term
+    | term
+    ;
+term
+    = term OP_STAR factor
+    | term OP_SLASH factor
+    | factor
+    ;
+factor
+    = factor OP_POW pow_term
+    | pow_term
+    ;
+pow_term
+    = OP_MINUS pow_term # Negation
+    | OPEN_PAREN expression CLOSE_PAREN
+    | function_call
+    | literal
     | NAME
     ;
 
-function_call = name OPEN_PAREN args CLOSE_PAREN;
+function_call = NAME OPEN_PAREN args CLOSE_PAREN;
 args
     = expression
     | expression COMMA args

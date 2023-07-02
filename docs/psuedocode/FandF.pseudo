@@ -1,0 +1,73 @@
+def computeFirstAndFollow( 
+  # List of terminal symbol names
+  terminals: List[terminalSymbol],
+  # Dict of symbol->ruleList
+  rules: Dict[nonterminalSymbol -> List[Rule],
+  # List of nonterminable symbols that can become epsilon/empty
+  nullables: List[nullableSymbol]
+)
+  first = Dict[str, Set[str]] = {}
+
+  # The first set for a terminal is the terminal
+  for terminal in terminals:
+    first[terminal] = {terminal}
+    
+  # Add epsilon to nullables
+  for symbol in rules if symbol in nullables:
+    first[symbol].add(EMPTY)
+    
+  # Compute First set
+  changed = True
+  while changed:
+    changed = False
+    for nonterm, ruleList in rules:
+      # takes a reference
+      leftSet = first[nonterm]
+      for rule in ruleList:
+        # Flag for if the prior symbol could have been empty
+        priorEmpty = True
+        for symbol in rule:
+          if priorEmpty:
+            # creates a new set
+            leftSet = leftSet.union(first[symbol])
+            priorEmpty = symbol in nullables
+        # End for symbol
+      # End for rule
+      if leftSet is proper superset of first[nonterm]:
+        first[nonterm] = leftSet
+        changed = True
+            
+  # Compute Follow set
+  changed = True
+    while changed:
+        changed = False
+        for nt, ruleList in rules:
+            left = follow[nt]
+            for rule in ruleList:
+                lastEmpty = True
+                for i in reversed(range(len(rule.rule))):
+                    val = rule.rule[i]
+                    if val == EMPTY:
+                        break
+                    if lastEmpty:
+                        right = follow[val]
+                        new = left.union(right)
+                        if new > right:
+                            follow[val] = new
+                            changed = True
+                        lastEmpty = EMPTY in first[val]
+                    if i > 0:
+                        prior = rule.rule[i - 1]
+                        curFirst = first[val].difference({EMPTY})
+                        priorFollow = follow[prior]
+                        new = priorFollow.union(curFirst)
+                        if new > priorFollow:
+                            follow[prior] = new
+                            changed = True
+                # END for rule
+            # END for rulelist
+        # END for rules
+    # END while changed
+    
+  
+    	

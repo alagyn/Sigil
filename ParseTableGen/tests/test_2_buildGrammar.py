@@ -32,14 +32,16 @@ class TestBuildgrammar(unittest.TestCase):
             self.assertEqual(EXP_TERMS[key], val, 'Terminal definition is not expected')
 
         EXP_RULES = [
-            Rule('PROGRAM', ['stmt']),
-            Rule('stmt', ['name', 'equals_sign', 'integer', 'semicolon']),
-            Rule('stmt', ['open_curly', 'integer', 'close_curly'])
+            Rule(1, 'PROGRAM', ['stmt']),
+            Rule(2, 'stmt', ['name', 'equals_sign', 'integer', 'semicolon']),
+            Rule(3, 'stmt', ['open_curly', 'integer', 'close_curly'])
         ]
 
         self.assertEqual(len(EXP_RULES), len(g.rules), 'Len of rules not equal')
 
         for exp, act in zip(EXP_RULES, g.rules):
             self.assertEqual(exp, act, "Rule definition is not as expected")
+
+        self.assertEqual("PROGRAM", g.startSymbol, "Start symbol not equal")
 
     # TODO invalid test files

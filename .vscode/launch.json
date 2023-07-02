@@ -8,10 +8,26 @@
             "name": "Main",
             "type": "python",
             "request": "launch",
-            "cwd": "${workspaceFolder}/SigilCompiler/ParseTableGen",
+            "cwd": "${workspaceFolder}/ParseTableGen",
             "module": "parse_table_gen.main",
             "args": [
-                "tests/test_descr/LALR1Test.ebnf"
+                "tests/test_descr/G10.sebnf",
+                "temp.h"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "Test",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/ParseTableGen",
+            "module": "unittest",
+            "args": [
+                "discover",
+                "-s",
+                "./tests",
+                "-p",
+                "test_*.py"
             ],
             "justMyCode": true
         }

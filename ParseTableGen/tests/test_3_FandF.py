@@ -81,3 +81,30 @@ class TestFirstAndFollow(unittest.TestCase):
         }
 
         self._checkSet("Follow", EXP_FOLLOW, ff.follow)
+
+    def testFandF3(self):
+        """
+        Grammer G10 from Thain book
+        """
+        testFile = utils.getTestFilename('G10.sebnf')
+        g = parse_ebnf_file(testFile)
+
+        ff = FirstAndFollow(g)
+
+        EXP_FIRST = {
+            "id": {"id"},
+            "plus": {"plus"},
+            "open_p": {"open_p"},
+            "close_p": {"close_p"},
+            'P': {"id"},
+            'E': {"id"},
+            "T": {"id"}
+        }
+
+        self._checkSet("First", EXP_FIRST, ff.first)
+
+        EXP_FOLLOW = {
+            "P": {END}, "E": {"plus", END, "close_p"}, "T": {"close_p", "plus", END}
+        }
+
+        self._checkSet("Follow", EXP_FOLLOW, ff.follow)

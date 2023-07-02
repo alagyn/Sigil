@@ -8,7 +8,9 @@ find_package(Boost 1.82.0
 
 set(SGC_SRC
     src/main.cpp
+    src/parser.cpp
     src/scanner.cpp
+    src/syntaxTree.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SGC_SRC})

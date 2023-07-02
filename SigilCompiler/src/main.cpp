@@ -4,7 +4,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
-#include <inc/ParseTable.h>
+#include <inc/parser.h>
 #include <inc/scanner.h>
 
 using namespace std;
@@ -52,18 +52,14 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    sigil::Scanner scanner(filename);
-    sigil::Symbol symbol;
-
-    do
+    auto scanner = std::make_shared<sigil::Scanner>(filename);
+    sigil::Parser parser(scanner);
+    try
     {
-        std::string tokenStr;
-        symbol = scanner.nextToken(tokenStr);
-        cout << sigil::TERMINAL_LOOKUP.at(symbol) << " ";
-        if(symbol == sigil::Symbol::SEMICOLON)
-        {
-            cout << "\n";
-        }
+        parser.parse();
     }
-    while(symbol != sigil::Symbol::__EOF__);
+    catch(const std::runtime_error& err)
+    {
+        cout << "Parse error " << err.what() << "\n";
+    }
 }

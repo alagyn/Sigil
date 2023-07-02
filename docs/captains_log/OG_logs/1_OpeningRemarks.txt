@@ -1,0 +1,51 @@
+Stardate - 2/14/2022
+
+Today marks the day that a new adventure will start. I am freshly graduated with my bachelors degree in Computer
+Science and am on the hunt for employment, but in the meantime (and probably while I have a job), I have a new
+project: creating my own personal programming language. For those of you unaware, suffice it to say that this
+is not a trivial objective. The purpose of this first log is to detail some of the initial requirements I am setting for
+this new language, but first I would like to say that the goal of this project is primarily to prove to myself that I can create a language.
+Again, this is not an easy thing to do and I have almost no knowledge on the subject. I had wanted to take an elective on
+compilers during college, but it never worked out with my schedule meaning this project will be entirely self taught.
+
+Another thing I am setting in stone now is that this is a project that I intend to finish. Those that know me personally or have
+perused my GitHub repos will know that I have a tendancy to get an idea, start a project, then never finish it (or in the process
+of working on it, have another idea, start a new project, then not finish either of them). Therefore this project will only be complete
+when I have a working prototype, or by admission of utter defeat. I am recording this log in order to keep track 
+of my thoughts, keep myself on track and potentially as a reference to other people who intend to make the same journey as I am.
+
+
+I intend to create a language that is the ultimate combination of the things I like about the 3 languages I use the most:
+1) Python
+2) Java
+3) C++
+If you know your languages, then you know that these are all within the same approximate family:
+* Procedural, Functional, and Object Oriented
+* Syntax is heavily C based
+* Generic (i.e., not field specific like R, Matlab, etc)
+
+In terms of the "level" of these languages, however, they are obviously all over the place: Python is very high, C++ is low, and Java is
+somewhere in the middle. They also differ in runtime, with C++ being compiled, Python is interpreted, and Java once again somewhere in the
+middle doing a bit of both. I will need to deliberate about how my language will be run as they all have their pros and cons. but I am leaning 
+towards something similar to Jave if possible.
+
+The next couple of logs will detail my thoughts about these languages.
+
+The first steps for this project will primarily be education and planning. Like I said before, I have little experience with creating languages or 
+writing compilers. I at least know how to define grammars, but I will need to learn a lot more about how languages are actually constructed.
+
+To start off with, I am reading: "Compiler Construction" by William M. Waite and Herhard Goos.
+Free PDF: https://www.cs.cmu.edu/~aplatzer/course/Compilers/waitegoos.pdf
+This text is a bit dated by now (1995), but it seems to have a strong base in the theory and should prove useful. 
+(372 pages)
+
+Next:
+  Compilers: Principles, Techniques, and Tools. (Second Edition). Aho, Lam, Sethi, and Ullman. ISBN: 0-321-48681-1
+  (2007) looks... thorough, probably a useful one (1038 pages)
+
+  "Introduction to Compilers and Language Design" by Douglas Thain
+  Free PDF: https://www3.nd.edu/~dthain/compilerbook/
+  More modern (2020) and potentially a bit more implementation focused (247 pages)
+  
+  Programming Language Pragmatics. (Third Edition). Michael L. Scott. ISBN: 978-0-12-374514-9.
+  (2009) Looks about the same as the last one (940 pages)

@@ -4,7 +4,8 @@ import re
 
 class Rule:
 
-    def __init__(self, nonterm: str, symbols: List[str]) -> None:
+    def __init__(self, id: int, nonterm: str, symbols: List[str]) -> None:
+        self.id = id
         self.nonterm = nonterm
         self.symbols = symbols
 
@@ -81,7 +82,7 @@ class Grammer:
 
 
 TERMINAL_RE = re.compile(r'(?P<name>\w+)\s*=\s*(?P<regex>(\'[^\']+\')|("[^"]+"));')
-RULE_RE = re.compile(r'(?P<nonterm>\w+)\s*=\s*(?P<symbols>(\w+(\s+\w+)*)(\s*\|\s*\w+(\s+\w+)*)*);')
+RULE_RE = re.compile(r'(?P<nonterm>\w+)\s*=\s*(?P<symbols>(\w+(\s+\w+)*)(\s*\|\s*\w+(\s+\w+)*)*)\s*;')
 
 
 def parse_grammer(lines: List[str]) -> Grammer:
@@ -90,6 +91,7 @@ def parse_grammer(lines: List[str]) -> Grammer:
     rules: List[Rule] = []
     nonterminals = set()
     nulls = set()
+    ruleId = 1
 
     error = False
     for line in lines:
@@ -130,7 +132,8 @@ def parse_grammer(lines: List[str]) -> Grammer:
 
                 if not gotNull:
                     nonterminals.add(nonterm)
-                    rules.append(Rule(nonterm, symbols))
+                    rules.append(Rule(ruleId, nonterm, symbols))
+                    ruleId += 1
             continue
 
         print("Invalid line:", line)

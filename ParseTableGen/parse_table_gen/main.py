@@ -51,14 +51,16 @@ def main():
             "\n"
             "namespace sigil {\n"
             "\n"
-            "enum class Action\n"
-            "{\n"
-            "    Error,\n"
-            "    Shift,\n"
-            "    Reduce,\n"
-            "    Goto,\n"
-            "    Accept\n"
-            "};\n"
+            "// Error\n"
+            "constexpr char E = 0;\n"
+            "// Shift\n"
+            "constexpr char S = 1;\n"
+            "// Reduce\n"
+            "constexpr char R = 2;\n"
+            "// Goto\n"
+            "constexpr char G = 3;\n"
+            "// Accept\n"
+            "constexpr char A = 4;\n"
             "\n"
             'enum class Symbol {\n'
         )
@@ -97,10 +99,28 @@ def main():
         f.write("};\n\n")  # End Terminal list
 
         f.write(
+            "typedef struct {\n"
+            "    // The number of states to pop\n"
+            "    short numPops;\n"
+            "    // The ID of the nonterminal reduced to\n"
+            "    short nontermID;\n"
+            "} Reduction;\n"
+            "// idx == the rule, retrieved from the parse table\n"
+            "\n"
+            "const std::vector<Reduction> REDUCTIONS = {\n"
+        )
+        for idx, rule in enumerate(grammer.rules):
+            f.write(f'{{{len(rule.symbols)} , {table.symbolIDs[rule.nonterm]}}}')
+            if idx < len(grammer.rules) + 1:
+                f.write(',')
+            f.write('\n')
+        f.write("};\n")  # End REDUCTIONS
+
+        f.write(
             "typedef struct\n"
             "{\n"
-            "    Action action;\n"
-            "    int state;\n"
+            "    char action = E;\n"
+            "    short state = 0;\n"
             "} ParseAction;\n"
             "\n"
             f"const ParseAction PARSE_TABLE[{len(table.table)}][{len(table.table[0])}] = {{\n"
@@ -109,17 +129,10 @@ def main():
         for rowIdx, row in enumerate(table.table):
             f.write("{ ")
             for idx, action in enumerate(row):
-                if action[0] == ParseTable.ACCEPT:
-                    actEnum = "Accept"
-                elif action[0] == ParseTable.GOTO:
-                    actEnum = "Goto"
-                elif action[0] == ParseTable.REDUCE:
-                    actEnum = "Reduce"
-                elif action[0] == ParseTable.SHIFT:
-                    actEnum = "Shift"
+                if action[0] != ParseTable.ERROR:
+                    f.write(f"{{{action[0]}, {action[1]}}}")
                 else:
-                    actEnum = "Error"
-                f.write(f"{{Action::{actEnum}, {action[1]}}}")
+                    f.write('{}')
                 if idx < len(row) - 1:
                     f.write(", ")
 
