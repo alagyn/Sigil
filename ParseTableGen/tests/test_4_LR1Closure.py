@@ -19,6 +19,10 @@ class TestLALRClosure(unittest.TestCase):
 
         self.assertEqual(len(expNodes), len(actNodes))
 
+    def _checkTransitions(self, expNodes: List[Node], actNodes: List[Node]):
+        for exp, act in zip(expNodes, actNodes):
+            self.assertDictEqual(exp.trans, act.trans)
+
     def test_0_node_combine(self):
         SP = 'S_PRIME'
         S = 'S'
@@ -49,7 +53,7 @@ class TestLALRClosure(unittest.TestCase):
 
         self.assertEqual(expNode, n0)
 
-    def test_1_closure1(self):
+    def test_1_LALR1(self):
         testfile = utils.getTestFilename('LALR1Test.sebnf')
         grammer = parse_ebnf_file(testfile)
         ff = FirstAndFollow(grammer)
@@ -99,7 +103,7 @@ class TestLALRClosure(unittest.TestCase):
 
         self._checkNodes(EXP_NODES, lalr.nodes)
 
-    def test_2_closure2(self):
+    def test_2_G10(self):
         testfile = utils.getTestFilename("G10.sebnf")
         grammer = parse_ebnf_file(testfile)
         ff = FirstAndFollow(grammer)
@@ -163,3 +167,71 @@ class TestLALRClosure(unittest.TestCase):
         EXP_NODES = [n0, n1, n2, n3, n4, n5, n6, n7, n8]
 
         self._checkNodes(EXP_NODES, lalr.nodes)
+
+        n0.addTrans(E, n1)
+        n0.addTrans(T, n2)
+        n0.addTrans(_id, n3)
+
+        n1.addTrans(plus, n4)
+
+        n3.addTrans(open_p, n5)
+
+        n4.addTrans(T, n6)
+        n4.addTrans(_id, n3)
+
+        n5.addTrans(T, n2)
+        n5.addTrans(_id, n3)
+        n5.addTrans(E, n7)
+
+        n7.addTrans(close_p, n8)
+        n7.addTrans(plus, n4)
+
+        self._checkTransitions(EXP_NODES, lalr.nodes)
+
+    def test_3_epsilon(self):
+        testfile = utils.getTestFilename("epsilon.sebnf")
+        grammer = parse_ebnf_file(testfile)
+        ff = FirstAndFollow(grammer)
+        lalr = LALR1Automata(grammer, ff)
+
+        S = "S"
+        A = "A"
+        B = "B"
+        a = "a"
+        b = "b"
+
+        r0 = Rule(0, S, [A])
+        r1 = Rule(1, A, [B, b])
+        r2 = Rule(2, B, [B, a])
+        r3 = Rule(3, B, [])
+
+        n0 = Node(0)
+        n0.addRule(r0, 0, {END})
+        n0.addRule(r1, 0, {END})
+        n0.addRule(r2, 0, {a, b})
+        n0.addRule(r3, 0, {a, b})
+
+        n1 = Node(1)
+        n1.addRule(r0, 1, {END})
+
+        n2 = Node(2)
+        n2.addRule(r1, 1, {END})
+        n2.addRule(r2, 1, {a, b})
+
+        n3 = Node(3)
+        n3.addRule(r1, 2, {END})
+
+        n4 = Node(4)
+        n4.addRule(r2, 2, {a, b})
+
+        EXP_NODES = [n0, n1, n2, n3, n4]
+
+        self._checkNodes(EXP_NODES, lalr.nodes)
+
+        n0.addTrans(A, n1)
+        n0.addTrans(B, n2)
+
+        n2.addTrans(b, n3)
+        n2.addTrans(a, n4)
+
+        self._checkTransitions(EXP_NODES, lalr.nodes)

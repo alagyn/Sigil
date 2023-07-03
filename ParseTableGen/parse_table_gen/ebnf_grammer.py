@@ -91,7 +91,7 @@ def parse_grammer(lines: List[str]) -> Grammer:
     rules: List[Rule] = []
     nonterminals = set()
     nulls = set()
-    ruleId = 1
+    ruleId = 0
 
     error = False
     for line in lines:
@@ -130,10 +130,12 @@ def parse_grammer(lines: List[str]) -> Grammer:
                         nulls.add(nonterm)
                         gotNull = True
 
-                if not gotNull:
-                    nonterminals.add(nonterm)
-                    rules.append(Rule(ruleId, nonterm, symbols))
-                    ruleId += 1
+                if gotNull:
+                    symbols = []
+
+                nonterminals.add(nonterm)
+                rules.append(Rule(ruleId, nonterm, symbols))
+                ruleId += 1
             continue
 
         print("Invalid line:", line)

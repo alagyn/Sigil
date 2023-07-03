@@ -38,13 +38,13 @@ namespace sigil {
             return out;
         }
 
-        // Initialize set of available terminals
-        list<const Terminal*> availableTerminals;
-
-        for(const Terminal& t : TERMINALS)
-        {
-            availableTerminals.push_back(&t);
-        }
+        // TODO optimizations here
+        /*
+            we can maybe keep track of whether each terminal has starting
+           matching yet and prune when they stop. This will cause errors if the
+           re has to ability to go in and out of matching, but is that a common
+           thing for the kinds of re here?
+        */
 
         // flag for if we have started having matches
         bool foundMatch = false;
@@ -137,11 +137,11 @@ namespace sigil {
                 /*
                     Find the first terminal that matches
                 */
-                for(auto term : availableTerminals)
+                for(auto& term : TERMINALS)
                 {
-                    if(boost::regex_match(out.text, term->re))
+                    if(boost::regex_match(out.text, term.re))
                     {
-                        out.symbol = term->id;
+                        out.symbol = term.id;
                         return out;
                     }
                 }

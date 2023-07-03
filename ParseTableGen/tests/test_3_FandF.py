@@ -18,7 +18,7 @@ class TestFirstAndFollow(unittest.TestCase):
 
         self.assertEqual(len(expected), len(actual), f'Len of {setType} set not equal to expected')
 
-    def test_FandF1(self):
+    def test_1_FandFtest1(self):
         """
         From compiler book by Thain
         """
@@ -53,7 +53,7 @@ class TestFirstAndFollow(unittest.TestCase):
 
         self._checkSet("Follow", EXP_FOLLOW, ff.follow)
 
-    def testFandF2(self):
+    def test_2_FandFtest2(self):
         """
         Test from https://people.cs.pitt.edu/~jmisurda/teaching/cs1622/handouts/cs1622-first_and_follow.pdf
         """
@@ -82,7 +82,7 @@ class TestFirstAndFollow(unittest.TestCase):
 
         self._checkSet("Follow", EXP_FOLLOW, ff.follow)
 
-    def testFandF3(self):
+    def test_3_G10(self):
         """
         Grammer G10 from Thain book
         """
@@ -106,5 +106,32 @@ class TestFirstAndFollow(unittest.TestCase):
         EXP_FOLLOW = {
             "P": {END}, "E": {"plus", END, "close_p"}, "T": {"close_p", "plus", END}
         }
+
+        self._checkSet("Follow", EXP_FOLLOW, ff.follow)
+
+    def test_4_epsilon(self):
+        testFile = utils.getTestFilename('epsilon.sebnf')
+        g = parse_ebnf_file(testFile)
+        ff = FirstAndFollow(g)
+
+        # yapf: disable
+        EXP_FIRST = {
+            "a": {"a"},
+            "b": {"b"},
+            "S": {"b", "a", EMPTY},
+            "A": {"b", "a", EMPTY},
+            "B": {"a", EMPTY}
+        }
+        # yapf: enable
+
+        self._checkSet("First", EXP_FIRST, ff.first)
+
+        # yapf: disable
+        EXP_FOLLOW = {
+            "S": {END},
+            "A": {END},
+            "B": {'b', 'a'}
+        }
+        # yapf: enable
 
         self._checkSet("Follow", EXP_FOLLOW, ff.follow)

@@ -60,6 +60,6 @@ int main(int argc, char* argv[])
     }
     catch(const std::runtime_error& err)
     {
-        cout << "Parse error " << err.what() << "\n";
+        cout << err.what() << "\n";
     }
 }

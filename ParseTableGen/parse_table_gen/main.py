@@ -72,11 +72,13 @@ def main():
             f.write("\n")
         f.write("};\n\n")  # End enum Symbol
 
-        f.write("const std::map<Symbol, std::string> TERMINAL_LOOKUP = {\n")
-        for idx, terminal in enumerate(grammer.terminalList):
-            f.write(f'    {{Symbol::{terminal[0]}, "{terminal[0]}"}},\n')
-        f.write(f'    {{Symbol::{END}, "{END}"}}')
-        f.write("};\n\n")  # End Terminal name map
+        f.write("const std::vector<std::string> SYMBOL_LOOKUP = {\n")
+        for idx, symbol in enumerate(table.symbolList):
+            f.write(f'   "{symbol}"')
+            if idx < len(table.symbolList) - 1:
+                f.write(',')
+            f.write("\n")
+        f.write("};\n\n")  # End Symbol name list
 
         f.write(
             "typedef struct\n"
@@ -123,6 +125,8 @@ def main():
             "    short state = 0;\n"
             "} ParseAction;\n"
             "\n"
+            f"constexpr unsigned TABLE_ROWS = {len(table.table)};\n"
+            f"constexpr unsigned TABLE_COLS = {len(table.table[0])};\n"
             f"const ParseAction PARSE_TABLE[{len(table.table)}][{len(table.table[0])}] = {{\n"
         )
 

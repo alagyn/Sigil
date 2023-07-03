@@ -3,7 +3,6 @@ program = definitions;
 definitions
     = definition
     | definition definitions
-    | EMPTY
     ;
 
 # Char declarations

@@ -22,8 +22,8 @@ namespace sigil {
             ParseAction nextAction =
                 PARSE_TABLE[stack.back()][static_cast<unsigned>(token.symbol)];
 
-            std::cout << TERMINAL_LOOKUP.at(token.symbol) << " "
-                      << token.lineNum << "." << token.charNum << " "
+            std::cout << SYMBOL_LOOKUP.at(static_cast<unsigned>(token.symbol))
+                      << " " << token.lineNum << "." << token.charNum << " "
                       << token.text << " ";
 
             switch(nextAction.action)
@@ -40,9 +40,11 @@ namespace sigil {
             case R:
             {
                 auto reduction = REDUCTIONS[nextAction.state];
-                std::cout << "R" << nextAction.state
+                std::cout << "Reduce to \""
+                          << SYMBOL_LOOKUP[reduction.nontermID] << "\""
+                          << " via rule: " << nextAction.state << " {"
                           << " pops: " << reduction.numPops
-                          << " goto idx: " << reduction.nontermID << "\n";
+                          << " goto idx: " << reduction.nontermID << " }\n";
                 for(int i = 0; i < reduction.numPops; ++i)
                 {
                     stack.pop_back();
@@ -57,9 +59,11 @@ namespace sigil {
                 }
 
                 stack.push_back(nextGoto.state);
+                break;
             }
             default:
             {
+                std::cout << "\n";
                 std::stringstream ss;
                 ss << "Parse Error at line " << token.lineNum << " char "
                    << token.charNum << " token: " << token.text << "\n";
@@ -67,6 +71,16 @@ namespace sigil {
                 for(auto x : stack)
                 {
                     ss << x << " ";
+                }
+
+                ss << "Expected one of: ";
+                for(int i = 0; i < TABLE_COLS; ++i)
+                {
+                    auto& x = PARSE_TABLE[stack.back()][i];
+                    if(x.action != E)
+                    {
+                        ss << SYMBOL_LOOKUP[i] << " ";
+                    }
                 }
 
                 ss << "\n";
