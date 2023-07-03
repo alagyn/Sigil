@@ -6,7 +6,7 @@ compile_flags.txt
 build
 venv
 
-SigilCompiler/inc/ParseTable.h
+SigilCompiler/src/parseTable.cpp
 
 **/__pycache__/**
 

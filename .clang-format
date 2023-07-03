@@ -93,7 +93,7 @@ KeepEmptyLinesAtTheStartOfBlocks : false
 LambdaBodyIndentation : Signature
 
 MaxEmptyLinesToKeep : 1
-NamespaceIndentation : All
+NamespaceIndentation : Inner
 
 PPIndentWidth : -1
 PackConstructorInitializers : Never
