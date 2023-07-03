@@ -4,12 +4,14 @@ import utils
 from parse_table_gen.main import parse_ebnf_file
 from parse_table_gen.ebnf_grammer import Grammer
 from parse_table_gen.first_and_follow import FirstAndFollow
-from parse_table_gen.lalr1_automata import LALR1Automata, ParseTable
+from parse_table_gen.lalr1_automata import LALR1Automata, ParseTable, Action, TableType, ParseAction
+
+PA = ParseAction
 
 
 class TestParseTable(unittest.TestCase):
 
-    def _checkTable(self, exp, act):
+    def _checkTable(self, exp: TableType, act: TableType):
         for rowIdx, (expRow, actRow) in enumerate(zip(exp, act)):
             for colIdx, (expCol, actCol) in enumerate(zip(expRow, actRow)):
                 self.assertEqual(expCol, actCol, f"Error at [{rowIdx}][{colIdx}] expected {expCol} got {actCol}")
@@ -28,16 +30,16 @@ class TestParseTable(unittest.TestCase):
         # P E T id plus open_p close_p END
 
         # yapf: disable
-        EXP_TABLE = [
-            [(ParseTable.ACCEPT, 0), (ParseTable.GOTO, 1),  (ParseTable.GOTO, 2),  (ParseTable.SHIFT, 3), (ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0),  (ParseTable.ERROR, 0)],
-            [(ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.SHIFT, 4),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0),  (ParseTable.REDUCE, 0)],
-            [(ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.REDUCE, 2), (ParseTable.ERROR, 0), (ParseTable.REDUCE, 2), (ParseTable.REDUCE, 2)],
-            [(ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.REDUCE, 4), (ParseTable.SHIFT, 5), (ParseTable.REDUCE, 4), (ParseTable.REDUCE, 4)],
-            [(ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.GOTO, 6),  (ParseTable.SHIFT, 3), (ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0),  (ParseTable.ERROR, 0)],
-            [(ParseTable.ERROR, 0),  (ParseTable.GOTO, 7),  (ParseTable.GOTO, 2),  (ParseTable.SHIFT, 3), (ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0),  (ParseTable.ERROR, 0)],
-            [(ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.REDUCE, 1), (ParseTable.ERROR, 0), (ParseTable.REDUCE, 1), (ParseTable.REDUCE, 1)],
-            [(ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.SHIFT, 4),  (ParseTable.ERROR, 0), (ParseTable.SHIFT, 8),  (ParseTable.ERROR, 0)],
-            [(ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.ERROR, 0), (ParseTable.REDUCE, 3), (ParseTable.ERROR, 0), (ParseTable.REDUCE, 3), (ParseTable.REDUCE, 3)]
+        EXP_TABLE: TableType = [
+            [PA(Action.A, 0), PA(Action.G, 1), PA(Action.G, 2), PA(Action.S, 3), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.S, 4), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 2), PA(Action.E, 0), PA(Action.R, 2), PA(Action.R, 2)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 4), PA(Action.S, 5), PA(Action.R, 4), PA(Action.R, 4)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.G, 6), PA(Action.S, 3), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0)],
+            [PA(Action.E, 0), PA(Action.G, 7), PA(Action.G, 2), PA(Action.S, 3), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 1), PA(Action.E, 0), PA(Action.R, 1), PA(Action.R, 1)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.S, 4), PA(Action.E, 0), PA(Action.S, 8), PA(Action.E, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 3), PA(Action.E, 0), PA(Action.R, 3), PA(Action.R, 3)]
         ]
         # yapf: enable
 
@@ -55,12 +57,12 @@ class TestParseTable(unittest.TestCase):
         # symbol order S A B b a END
 
         # yapf: disable
-        EXP_TABLE = [
-            [(ParseTable.ACCEPT, 0), (ParseTable.GOTO, 1),  (ParseTable.GOTO, 2),   (ParseTable.REDUCE, 3),  (ParseTable.REDUCE, 3),  (ParseTable.ERROR, 0)],
-            [(ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0),  (ParseTable.ERROR, 0),   (ParseTable.ERROR, 0),   (ParseTable.REDUCE, 0)],
-            [(ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0),  (ParseTable.SHIFT, 3),   (ParseTable.SHIFT, 4),   (ParseTable.ERROR, 0)],
-            [(ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0),  (ParseTable.ERROR, 0),   (ParseTable.ERROR, 0),   (ParseTable.REDUCE, 1)],
-            [(ParseTable.ERROR, 0),  (ParseTable.ERROR, 0), (ParseTable.ERROR, 0),  (ParseTable.REDUCE, 2),  (ParseTable.REDUCE, 2),  (ParseTable.ERROR, 0)]
+        EXP_TABLE: TableType = [
+            [PA(Action.A, 0), PA(Action.G, 1), PA(Action.G, 2), PA(Action.R, 3), PA(Action.R, 3), PA(Action.E, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.S, 3), PA(Action.S, 4), PA(Action.E, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 1)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 2), PA(Action.R, 2), PA(Action.E, 0)]
         ]
         # yapf: enable
 

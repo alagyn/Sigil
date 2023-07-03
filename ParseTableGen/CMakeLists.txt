@@ -10,7 +10,7 @@ find_package(Python3
     whenever the python code or the chosen grammer file changes
 ]]#
 
-set(OUTPUT_HEADER ${CMAKE_SOURCE_DIR}/SigilCompiler/inc/ParseTable.h)
+set(GRAMMER_SOURCE_FILE ${CMAKE_SOURCE_DIR}/SigilCompiler/src/parseTable.cpp)
 
 set(PY_FILES
     parse_table_gen/consts.py
@@ -23,13 +23,13 @@ set(PY_FILES
 
 # Custom command to generate the header
 add_custom_command(
-    OUTPUT ${OUTPUT_HEADER}
+    OUTPUT ${GRAMMER_SOURCE_FILE}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND ${Python3_EXECUTABLE} -m parse_table_gen.main ${GRAMMER_FILE} ${OUTPUT_HEADER}
+    COMMAND ${Python3_EXECUTABLE} -m parse_table_gen.main ${GRAMMER_FILE} ${GRAMMER_SOURCE_FILE}
     DEPENDS ${GRAMMER_FILE} ${PY_FILES}
 )
 
 # Custom target that depends on the output so that we can specify it as a dependency
 add_custom_target(${PROJECT_NAME}
-    DEPENDS ${OUTPUT_HEADER} ${GRAMMER_FILE} ${PY_FILES}
+    DEPENDS ${GRAMMER_SOURCE_FILE} ${GRAMMER_FILE} ${PY_FILES}
 )

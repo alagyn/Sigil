@@ -11,6 +11,7 @@ set(SGC_SRC
     src/parser.cpp
     src/scanner.cpp
     src/syntaxTree.cpp
+    src/parseTable.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SGC_SRC})

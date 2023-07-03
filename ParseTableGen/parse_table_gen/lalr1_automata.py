@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from collections import deque
 import itertools
 
@@ -275,12 +275,43 @@ class LALR1Automata:
         return newNode, True
 
 
+class Action:
+    S = 'S'
+    R = 'R'
+    G = 'G'
+    E = 'E'
+    A = 'A'
+
+
+class ParseAction:
+
+    def __init__(self, action=Action.E, state=0, rule: Optional[Rule] = None) -> None:
+        self.action = action
+        self.state = state
+        self.rule = rule
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ParseAction):
+            return False
+
+        return self.action == other.action and self.state == other.state
+
+    def __str__(self) -> str:
+        return f'{self.action}{self.state} {self.rule}'
+
+
+RowType = List[ParseAction]
+TableType = List[RowType]
+
+
 class ParseTable:
-    SHIFT = 'S'
-    REDUCE = 'R'
-    GOTO = 'G'
-    ERROR = 'E'
-    ACCEPT = 'A'
+
+    def _conflict(self, node: Node, symbol: str, first: ParseAction, second: ParseAction):
+        raise RuntimeError(
+            f'Cannot build parse table, conflict: {node}, Symbol: {symbol}\n'
+            f'\tA1: {first}\n'
+            f'\tA2: {second}'
+        )
 
     def __init__(self, automata: LALR1Automata) -> None:
 
@@ -297,19 +328,21 @@ class ParseTable:
             for idx, x in enumerate(self.symbolList)
         }
 
-        self.table: List[List[Tuple[str, int]]] = []
+        self.table: TableType = []
         for node in automata.nodes:
-            curRow: List[Tuple[str, int]] = [(ParseTable.ERROR, 0) for _ in self.symbolIDs]
+            curRow: RowType = [ParseAction() for _ in self.symbolIDs]
             self.table.append(curRow)
 
             for rule in node.rules:
                 if rule.indexAtEnd():
                     for terminal in automata.ff.follow[rule.rule.nonterm]:
                         termID = self.symbolIDs[terminal]
-                        if curRow[termID] != (ParseTable.ERROR, 0):
-                            raise RuntimeError(f"Cannot build parse table, reduce-reduce conflict: {node}, {rule}")
+                        curActionTuple = curRow[termID]
+                        newActionTuple = ParseAction(Action.R, rule.rule.id, rule.rule)
+                        if curActionTuple != ParseAction() and curActionTuple != newActionTuple:
+                            self._conflict(node, terminal, curActionTuple, newActionTuple)
 
-                        curRow[termID] = (ParseTable.REDUCE, rule.rule.id)
+                        curRow[termID] = newActionTuple
                     continue
 
                 nextSymbol = rule.nextSymbol()
@@ -317,22 +350,20 @@ class ParseTable:
                 nextNode = node.trans[nextSymbol].id
 
                 if nextSymbol in automata.grammer.terminals:
-                    nextAction = ParseTable.SHIFT
+                    nextAction = Action.S
                 else:
-                    nextAction = ParseTable.GOTO
+                    nextAction = Action.G
 
-                newAction = (nextAction, nextNode)
-                curAction = curRow[nextSymbolID]
-                if curAction != (ParseTable.ERROR, 0) and curAction != newAction:
-                    raise RuntimeError(
-                        f'Cannot build parse table, conflict: {node}, {rule}, symbol: {nextSymbol}, A1: {curRow[nextSymbolID]} A2: {(nextAction, nextNode)}'
-                    )
+                newActionTuple = ParseAction(nextAction, nextNode, rule.rule)
+                curActionTuple = curRow[nextSymbolID]
+                if curActionTuple != ParseAction() and curActionTuple != newActionTuple:
+                    self._conflict(node, nextSymbol, curActionTuple, newActionTuple)
 
-                curRow[nextSymbolID] = (nextAction, nextNode)
+                curRow[nextSymbolID] = newActionTuple
             # End for rule in node
         # End for node in automata
 
-        self.table[0][0] = (ParseTable.ACCEPT, 0)
+        self.table[0][0] = ParseAction(Action.A, 0, None)
 
     def printTable(self):
         print("   ", end="")
@@ -343,9 +374,9 @@ class ParseTable:
         for idx, row in enumerate(self.table):
             print(f'{idx}: ', end="")
             for x in row:
-                if x[0] == ParseTable.ERROR:
+                if x.action == Action.E:
                     print("          ", end="")
                 else:
-                    print(f'{x[0]}{x[1]}        ', end="")
+                    print(f'{x.action}{x.state}        ', end="")
             print("")
         print("")
