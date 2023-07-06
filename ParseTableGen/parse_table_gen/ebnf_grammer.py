@@ -139,6 +139,7 @@ def parse_grammer(lines: List[str]) -> Grammer:
             continue
 
         print("Invalid line:", line)
+        print("Previous rule:", rules[-1])
         error = True
 
     if error:

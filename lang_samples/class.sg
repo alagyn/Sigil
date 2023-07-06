@@ -1,4 +1,4 @@
-import math;
+#import math;
 
 class Vehicle
 {
@@ -11,10 +11,13 @@ class Vehicle
 
     # Outside access (i.e. public access) is essentially const
     # Internally it acts like a normal private member
+    # accessible to subclasses
     readonly
     {
         int gasRemaining;
         int odometer;
+        string currentLocation = "asdf";
+        float mpg;
     }
     
     # Shared == c++ protected
@@ -22,14 +25,6 @@ class Vehicle
     shared
     {
         int gasMax;
-    }
-    
-    # Common == shared + readonly
-    # Public access is const, subclass access is not
-    common
-    {
-        string currentLocation = "asdf";
-        float mpg;
     }
     
     public

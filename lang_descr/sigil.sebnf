@@ -28,13 +28,18 @@ OP_LT = "<";
 OP_GT = ">";
 
 # Keywords
+KW_DO = "do";
+KW_ELSE = "else";
 KW_FOR = "for";
 KW_IN = "in";
 KW_IF = "if";
-KW_ELSE = "else";
-KW_RETURN = "return";
 KW_NOT = "not";
+KW_RETURN = "return";
+KW_TO = "to";
+KW_WHILE = "while";
+KW_ABSTRACT = "abstract";
 
+KW_ENUM = "enum";
 KW_CLASS = "class";
 KW_PRIVATE = "private";
 
@@ -46,12 +51,25 @@ DOUBLE_QUOTE_STR = '"([^"]|(\\"))*"';
 SINGLE_QUOTE_STR = "'([^']|(\\'))*'";
 lit_string
     = DOUBLE_QUOTE_STR
-    | SINGLE_QUOTE_STR;
+    | SINGLE_QUOTE_STR
+    ;
+
+lit_list = OPEN_SQUARE args CLOSE_SQUARE;
+lit_set = OPEN_CURLY args CLOSE_CURLY;
+lit_map = OPEN_CURLY map_list CLOSE_CURLY;
+map_list
+    = map_expression
+    | map_expression COMMA map_list
+    ;
+
+map_expression = expression COLON expression;
 
 literal
     = LIT_INTEGER
     | LIT_FLOAT
+    | lit_set
     | lit_string
+    | lit_list
     ;
 
 # type names
@@ -74,24 +92,42 @@ type
     | NAME
     ;
 
+# Access modifiers
+ACC_PUBLIC = "public";
+ACC_PRIVATE = "private";
+ACC_READONLY = "readonly";
+ACC_SHARED = "shared";
+
+access_modifier
+    = ACC_PUBLIC
+    | ACC_PRIVATE
+    | ACC_READONLY
+    | ACC_SHARED
+    ;
+
 # This goes after all the builtins
 NAME = "[a-zA-Z][a-zA-Z0-9_]*";
 
 definition
     = func_definition
-    #| var_definition;
-    #| class_definition;
+    | class_definition
+    | enum_definition
     ;
 
 # Generic curly bracket body
-body 
+body
     = OPEN_CURLY statements CLOSE_CURLY
     | OPEN_CURLY CLOSE_CURLY # Allow for no statements without needing an epsilon
     ;
 
-func_definition 
-    = type NAME OPEN_PAREN arg_definitions CLOSE_PAREN body
-    | type NAME OPEN_PAREN CLOSE_PAREN body
+func_access
+    = access_modifier
+    | KW_ABSTRACT
+    ;
+
+func_definition
+    = func_access type NAME OPEN_PAREN arg_definitions CLOSE_PAREN body
+    | func_access type NAME OPEN_PAREN CLOSE_PAREN body
     ;
 
 arg_definitions
@@ -99,10 +135,9 @@ arg_definitions
     | argument COMMA arg_definitions
     ;
 
-argument = type NAME default_value;
-default_value
-    = OP_EQUALS expression # TODO is expression the right thing here? The value should be evaluatable at compile time
-    | EMPTY
+argument
+    = type NAME OP_EQUALS expression # TODO is expression the right thing here? The value should be evaluatable at compile time
+    | type NAME
     ;
 
 statements
@@ -114,8 +149,10 @@ statement
     = statement_body SEMICOLON # This enforces semicolons for all simple statements
     | body # Allow arbitrary scopes
     | if_statement
+    | while_statement
+    | do_while_statement
+    | for_statement
     ;
-
 
 statement_body
     = assignment
@@ -127,6 +164,14 @@ if_statement = KW_IF expression body else_statement;
 else_statement
     = KW_ELSE body
     | KW_ELSE if_statement # This will recurse for more else-ifs
+    ;
+
+while_statement = KW_WHILE expression body;
+do_while_statement = KW_DO body KW_WHILE expression SEMICOLON;
+
+for_statement
+    = KW_FOR NAME KW_IN expression body
+    | KW_FOR NAME KW_IN expression KW_TO expression body
     ;
 
 return_statement = KW_RETURN expression;
@@ -164,10 +209,35 @@ pow_term
     | NAME
     ;
 
-function_call = NAME OPEN_PAREN args CLOSE_PAREN;
+# Functions
+function_call
+    = NAME OPEN_PAREN args CLOSE_PAREN
+    | NAME OPEN_PAREN CLOSE_PAREN
+    ;
+
 args
     = expression
     | expression COMMA args
-    | EMPTY
     ;
 
+# Class
+class_definition
+    = KW_CLASS NAME COLON NAME OPEN_CURLY class_statements CLOSE_CURLY
+    | KW_CLASS NAME OPEN_CURLY class_statements CLOSE_CURLY
+    ;
+
+class_statements
+    = access_modifier body # Vars must be declared in an access modifer block
+    | access_modifier func_definition
+    ;
+
+# Enum
+enum_definition = KW_ENUM NAME OPEN_CURLY enum_statements CLOSE_CURLY;
+enum_statements
+    = enum_statement
+    | enum_statement enum_statements
+    ;
+enum_statement
+    = NAME SEMICOLON
+    | NAME OP_EQUALS LIT_INTEGER SEMICOLON
+    ;

@@ -6,6 +6,14 @@
 
 #include <boost/regex.hpp>
 
+/*
+
+TODO eliminate the first column of the parse table
+only thing that should be there is an accept in state 0
+we can instead just check for a reduction via rule 0
+and offset reduction lookups by 1
+*/
+
 namespace sigil {
 namespace parseTable {
 

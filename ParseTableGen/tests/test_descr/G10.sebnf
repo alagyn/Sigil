@@ -1,8 +1,8 @@
 # Grammer G10 From Thain book
-id = 'id';
-plus = '+';
-open_p = '(';
-close_p = ')';
+id = '[a-z]+';
+plus = '\+';
+open_p = '\(';
+close_p = '\)';
 
 P = E;
 E = E plus T;
