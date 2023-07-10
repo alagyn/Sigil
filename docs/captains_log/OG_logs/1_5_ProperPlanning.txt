@@ -1,6 +1,0 @@
-
-THE BIG THINGS:
-  A) Strongly Typed
-  B) True-multithreading support (hopefully)
-  C) Interpreted (probably) 
-  D) Clean interface for embedding in C++
