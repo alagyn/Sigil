@@ -1,0 +1,10 @@
+
+# This is a comment
+int funcName(str arg1, int arg2)
+{
+    ## This is a multiline 
+    comment
+    ##
+    x = "this is a double string";
+    y = 'this is a single string';
+}

@@ -5,7 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Main",
+            "name": "sgc test",
+            "type": "cppdbg",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceRoot}/build/SigilCompiler/sgc",
+            "args": [
+                "--file=test.sg"
+            ]
+        },
+        {
+            "name": "Gen Table",
             "type": "python",
             "request": "launch",
             "cwd": "${workspaceFolder}/ParseTableGen",
@@ -17,7 +27,7 @@
             "justMyCode": true
         },
         {
-            "name": "Test",
+            "name": "Test Python",
             "type": "python",
             "request": "launch",
             "cwd": "${workspaceFolder}/ParseTableGen",

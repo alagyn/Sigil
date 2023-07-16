@@ -1,10 +1,10 @@
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Set
 from collections import deque
 import itertools
 
 from parse_table_gen.ebnf_grammer import Grammer, Rule
 from parse_table_gen.first_and_follow import FirstAndFollow
-from parse_table_gen.consts import END
+from parse_table_gen.consts import END, EMPTY
 
 
 class AnnotRule:
@@ -154,8 +154,6 @@ class Node:
 
     def combine(self, other: 'Node') -> bool:
         out = False
-        if not self.canCombine(other):
-            raise RuntimeError("Attempting to combine unequal nodes")
         for ar1, ar2 in zip(self.rules, other.rules):
             if ar1.combine(ar2):
                 out = True
@@ -285,7 +283,7 @@ class Action:
 
 class ParseAction:
 
-    def __init__(self, action=Action.E, state=0, rule: Optional[Rule] = None) -> None:
+    def __init__(self, action=Action.E, state=0, rule: Optional[AnnotRule] = None) -> None:
         self.action = action
         self.state = state
         self.rule = rule
@@ -315,7 +313,7 @@ class ParseTable:
 
     def __init__(self, automata: LALR1Automata) -> None:
 
-        self.symbolList = [automata.grammer.startSymbol]
+        self.symbolList = []
         for x in sorted(automata.ruleLookup.keys()):
             if x != automata.grammer.startSymbol:
                 self.symbolList.append(x)
@@ -335,10 +333,12 @@ class ParseTable:
 
             for rule in node.rules:
                 if rule.indexAtEnd():
-                    for terminal in automata.ff.follow[rule.rule.nonterm]:
+                    for terminal in rule.lookAhead:
+                        if terminal == EMPTY:
+                            continue
                         termID = self.symbolIDs[terminal]
                         curActionTuple = curRow[termID]
-                        newActionTuple = ParseAction(Action.R, rule.rule.id, rule.rule)
+                        newActionTuple = ParseAction(Action.R, rule.rule.id, rule)
                         if curActionTuple != ParseAction() and curActionTuple != newActionTuple:
                             self._conflict(node, terminal, curActionTuple, newActionTuple)
 
@@ -354,7 +354,7 @@ class ParseTable:
                 else:
                     nextAction = Action.G
 
-                newActionTuple = ParseAction(nextAction, nextNode, rule.rule)
+                newActionTuple = ParseAction(nextAction, nextNode, rule)
                 curActionTuple = curRow[nextSymbolID]
                 if curActionTuple != ParseAction() and curActionTuple != newActionTuple:
                     self._conflict(node, nextSymbol, curActionTuple, newActionTuple)
@@ -362,8 +362,6 @@ class ParseTable:
                 curRow[nextSymbolID] = newActionTuple
             # End for rule in node
         # End for node in automata
-
-        self.table[0][0] = ParseAction(Action.A, 0, None)
 
     def printTable(self):
         print("   ", end="")

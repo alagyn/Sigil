@@ -29,9 +29,6 @@ std::shared_ptr<SyntaxTree> Parser::parse()
 
         switch(nextAction.action)
         {
-        case parseTable::A:
-            // TODO
-            return std::shared_ptr<SyntaxTree>(nullptr);
         case parseTable::S:
         {
             std::cout << "S" << nextAction.state << "\n";
@@ -42,6 +39,12 @@ std::shared_ptr<SyntaxTree> Parser::parse()
         }
         case parseTable::R:
         {
+            if(nextAction.state == 0)
+            {
+                std::cout << "Reduce to ACCEPT\n";
+                // TODO ACCEPT
+                return std::shared_ptr<SyntaxTree>(nullptr);
+            }
             auto reduction = parseTable::getReduction(nextAction.state);
             std::cout << "Reduce to \""
                       << parseTable::symbolLookup(reduction.nonterm) << "\""
@@ -54,12 +57,6 @@ std::shared_ptr<SyntaxTree> Parser::parse()
             }
             parseTable::ParseAction nextGoto =
                 parseTable::getAction(stack.back(), reduction.nonterm);
-
-            if(nextGoto.action == parseTable::A)
-            {
-                // TODO accept
-                return std::shared_ptr<SyntaxTree>(nullptr);
-            }
 
             stack.push_back(nextGoto.state);
 

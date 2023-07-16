@@ -6,14 +6,6 @@
 
 #include <boost/regex.hpp>
 
-/*
-
-TODO eliminate the first column of the parse table
-only thing that should be there is an accept in state 0
-we can instead just check for a reduction via rule 0
-and offset reduction lookups by 1
-*/
-
 namespace sigil {
 namespace parseTable {
 
@@ -25,8 +17,6 @@ namespace parseTable {
     constexpr char R = 2;
     // Goto
     constexpr char G = 3;
-    // Accept
-    constexpr char A = 4;
 
     enum class Symbol;
 

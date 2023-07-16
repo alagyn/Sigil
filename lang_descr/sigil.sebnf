@@ -24,6 +24,8 @@ OP_STAR = "\*";
 OP_SLASH = "/";
 OP_POW = "\*\*";
 OP_DOT = '\.';
+OP_LTEQ = "<=";
+OP_GTEQ = ">=";
 OP_LT = "<";
 OP_GT = ">";
 
@@ -38,13 +40,11 @@ KW_RETURN = "return";
 KW_TO = "to";
 KW_WHILE = "while";
 KW_ABSTRACT = "abstract";
-
 KW_ENUM = "enum";
 KW_CLASS = "class";
-KW_PRIVATE = "private";
 
 # Literals
-LIT_INTEGER = '[1-9]\d*';
+LIT_INT = '[1-9]\d*';
 LIT_FLOAT = "\d+.\d+"; # TODO scientific notation?
 
 DOUBLE_QUOTE_STR = '"([^"]|(\\"))*"';
@@ -65,11 +65,12 @@ map_list
 map_expression = expression COLON expression;
 
 literal
-    = LIT_INTEGER
+    = LIT_INT
     | LIT_FLOAT
     | lit_set
     | lit_string
     | lit_list
+    | lit_map
     ;
 
 # type names
@@ -84,7 +85,7 @@ TYPE_FLOAT = "float";
 type
     = TYPE_ARRAY OP_LT type OP_GT
     | TYPE_LIST OP_LT type OP_GT
-    | TYPE_MAP OP_LT type COLON type OP_GT
+    | TYPE_MAP OP_LT type COMMA type OP_GT
     | TYPE_SET OP_LT type OP_GT
     | TYPE_STR
     | TYPE_INT
@@ -123,6 +124,7 @@ body
 func_access
     = access_modifier
     | KW_ABSTRACT
+    | EMPTY
     ;
 
 func_definition
@@ -142,7 +144,7 @@ argument
 
 statements
     = statement
-    | statements statement # Recursion
+    | statement statements # Recursion
     ;
 
 statement
@@ -201,8 +203,10 @@ factor
     = factor OP_POW pow_term
     | pow_term
     ;
+
 pow_term
     = OP_MINUS pow_term # Negation
+    | KW_NOT pow_term
     | OPEN_PAREN expression CLOSE_PAREN
     | function_call
     | literal
@@ -221,9 +225,20 @@ args
     ;
 
 # Class
+class_definition_access
+    = ACC_PUBLIC
+    | ACC_PRIVATE
+    | EMPTY
+    ;
+
 class_definition
-    = KW_CLASS NAME COLON NAME OPEN_CURLY class_statements CLOSE_CURLY
-    | KW_CLASS NAME OPEN_CURLY class_statements CLOSE_CURLY
+    = class_definition_access KW_CLASS NAME OPEN_PAREN NAME CLOSE_PAREN class_body
+    | class_definition_access KW_CLASS NAME class_body
+    ;
+
+class_body
+    = OPEN_CURLY class_statements CLOSE_CURLY
+    | OPEN_CURLY CLOSE_CURLY
     ;
 
 class_statements
@@ -232,12 +247,13 @@ class_statements
     ;
 
 # Enum
-enum_definition = KW_ENUM NAME OPEN_CURLY enum_statements CLOSE_CURLY;
+enum_definition = class_definition_access KW_ENUM NAME OPEN_CURLY enum_statements CLOSE_CURLY;
 enum_statements
     = enum_statement
     | enum_statement enum_statements
     ;
+
 enum_statement
     = NAME SEMICOLON
-    | NAME OP_EQUALS LIT_INTEGER SEMICOLON
+    | NAME OP_EQUALS LIT_INT SEMICOLON
     ;

@@ -31,15 +31,15 @@ class TestParseTable(unittest.TestCase):
 
         # yapf: disable
         EXP_TABLE: TableType = [
-            [PA(Action.A, 0), PA(Action.G, 1), PA(Action.G, 2), PA(Action.S, 3), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0)],
-            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.S, 4), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 0)],
-            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 2), PA(Action.E, 0), PA(Action.R, 2), PA(Action.R, 2)],
-            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 4), PA(Action.S, 5), PA(Action.R, 4), PA(Action.R, 4)],
-            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.G, 6), PA(Action.S, 3), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0)],
-            [PA(Action.E, 0), PA(Action.G, 7), PA(Action.G, 2), PA(Action.S, 3), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0)],
-            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 1), PA(Action.E, 0), PA(Action.R, 1), PA(Action.R, 1)],
-            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.S, 4), PA(Action.E, 0), PA(Action.S, 8), PA(Action.E, 0)],
-            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 3), PA(Action.E, 0), PA(Action.R, 3), PA(Action.R, 3)]
+            [PA(Action.G, 1), PA(Action.G, 2), PA(Action.S, 3), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.S, 4), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 2), PA(Action.E, 0), PA(Action.R, 2), PA(Action.R, 2)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 4), PA(Action.S, 5), PA(Action.R, 4), PA(Action.R, 4)],
+            [PA(Action.E, 0), PA(Action.G, 6), PA(Action.S, 3), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0)],
+            [PA(Action.G, 7), PA(Action.G, 2), PA(Action.S, 3), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 1), PA(Action.E, 0), PA(Action.R, 1), PA(Action.R, 1)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.S, 4), PA(Action.E, 0), PA(Action.S, 8), PA(Action.E, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 3), PA(Action.E, 0), PA(Action.R, 3), PA(Action.R, 3)]
         ]
         # yapf: enable
 
@@ -58,11 +58,11 @@ class TestParseTable(unittest.TestCase):
 
         # yapf: disable
         EXP_TABLE: TableType = [
-            [PA(Action.A, 0), PA(Action.G, 1), PA(Action.G, 2), PA(Action.R, 3), PA(Action.R, 3), PA(Action.E, 0)],
-            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 0)],
-            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.S, 3), PA(Action.S, 4), PA(Action.E, 0)],
-            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 1)],
-            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 2), PA(Action.R, 2), PA(Action.E, 0)]
+            [PA(Action.G, 1), PA(Action.G, 2), PA(Action.R, 3), PA(Action.R, 3), PA(Action.E, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.S, 3), PA(Action.S, 4), PA(Action.E, 0)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 1)],
+            [PA(Action.E, 0), PA(Action.E, 0), PA(Action.R, 2), PA(Action.R, 2), PA(Action.E, 0)]
         ]
         # yapf: enable
 

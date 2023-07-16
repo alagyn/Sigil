@@ -40,17 +40,9 @@ def main():
 
     ff = FirstAndFollow(grammer)
 
-    try:
-        lalr = LALR1Automata(grammer, ff)
-    except Exception as err:
-        print("Cannot compute LALR(1) automata:", err)
-        exit(1)
+    lalr = LALR1Automata(grammer, ff)
 
-    try:
-        table = ParseTable(lalr)
-    except Exception as err:
-        print("Cannot compute parse table:", err)
-        exit(1)
+    table = ParseTable(lalr)
 
     with open(args.output_file, mode='w') as f:
         f.write(
@@ -98,9 +90,10 @@ def main():
         f.write("};\n\n")  # End Terminal list
 
         f.write("const std::vector<Reduction> REDUCTIONS = {\n")
-        for idx, rule in enumerate(grammer.rules):
+        ruleList = grammer.rules[1:]
+        for idx, rule in enumerate(ruleList):
             f.write(f'{{{len(rule.symbols)} , {table.symbolIDs[rule.nonterm]}}}')
-            if idx < len(grammer.rules) + 1:
+            if idx < len(ruleList) + 1:
                 f.write(',')
             f.write('\n')
         f.write("};\n")  # End REDUCTIONS
@@ -153,7 +146,7 @@ def main():
             "}\n"
             "const Reduction& getReduction(short rule)\n"
             "{\n"
-            "    return REDUCTIONS.at(rule);\n"
+            "    return REDUCTIONS.at(rule - 1);\n"
             "}\n"
             "const unsigned numRows()\n"
             "{\n"
