@@ -8,6 +8,9 @@ venv
 
 SigilCompiler/src/parseTable.cpp
 
+docs/readings
+lang_descr/bison
+
 **/__pycache__/**
 
 # Prerequisites
