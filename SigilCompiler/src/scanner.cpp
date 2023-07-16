@@ -60,6 +60,8 @@ ParseToken Scanner::nextToken()
        matching yet and prune when they stop. This will cause errors if the
        re has to ability to go in and out of matching, but is that a common
        thing for the kinds of re here?
+
+       this may be overkill as there is a rather low number of regexs to check
     */
 
     // flag for if we have started having matches
@@ -128,12 +130,17 @@ ParseToken Scanner::nextToken()
 
         consumeNewLine(nextChar);
 
-        bool hitWhitespace =
-            nextChar == ' ' || nextChar == '\t' || nextChar == '\n';
-
-        if(!hitWhitespace)
+        if(nextChar == ' ' || nextChar == '\t' || nextChar == '\n')
         {
-            // Don't include whitespace in the char
+            // Ignore leading whitespace
+            // We can't ignore all whitespace otherwise we break strings
+            if(!out.text.empty())
+            {
+                out.text.push_back(nextChar);
+            }
+        }
+        else
+        {
             out.text.push_back(nextChar);
         }
 
@@ -162,16 +169,13 @@ ParseToken Scanner::nextToken()
             foundMatch = true;
         }
         // Else if we previously found a match and then stopped or we hit whitespace
-        else if(foundMatch && (!foundNewMatch || hitWhitespace))
+        else if(foundMatch && !foundNewMatch)
         {
             // Therefore we have found the maximal-munch
-            if(!hitWhitespace)
-            {
-                // We need to unget the last char so we don't consume it
-                // we already skip whitespace
-                handle.unget();
-                out.text.pop_back();
-            }
+            // We need to unget the last char so we don't consume it
+            // we already skip whitespace
+            handle.unget();
+            out.text.pop_back();
 
             /*
                 Find the first terminal that matches
