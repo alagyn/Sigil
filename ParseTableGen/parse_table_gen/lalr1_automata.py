@@ -5,6 +5,7 @@ import itertools
 from parse_table_gen.ebnf_grammer import Grammer, Rule
 from parse_table_gen.first_and_follow import FirstAndFollow
 from parse_table_gen.consts import END, EMPTY
+from parse_table_gen.errors import PTGError
 
 
 class AnnotRule:
@@ -57,8 +58,6 @@ class AnnotRule:
         :param other: The rule to combine
         :return: True if look ahead was changed
         """
-        if not self.canCombine(other):
-            raise RuntimeError("Attempting to combine invalid rules")
         new = self.lookAhead.union(other.lookAhead)
         if new > self.lookAhead:
             self.lookAhead = new
@@ -162,8 +161,8 @@ class Node:
 
     def addTrans(self, nt: str, node: 'Node'):
         if nt in self.trans:
-            raise RuntimeError(
-                f"Node: {str(self)}\n"
+            raise PTGError(
+                f"LALR: Node: {str(self)}\n"
                 f"Attempted to add duplicate transition on NT: {nt}\n"
                 f"Existing: {str(self.trans[nt])}\n"
                 f"New: {str(node)}"
@@ -305,8 +304,8 @@ TableType = List[RowType]
 class ParseTable:
 
     def _conflict(self, node: Node, symbol: str, first: ParseAction, second: ParseAction):
-        raise RuntimeError(
-            f'Cannot build parse table, conflict: {node}, Symbol: {symbol}\n'
+        raise PTGError(
+            f'Parse Table: Cannot build parse table, conflict: {node}, Symbol: {symbol}\n'
             f'\tA1: {first}\n'
             f'\tA2: {second}'
         )

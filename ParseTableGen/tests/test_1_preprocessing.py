@@ -6,6 +6,7 @@ import parse_table_gen.preprocessing as preprocess
 import utils
 
 EXPECTED_CLEAN = [
+    r'%return int',
     'semicolon = ";";',
     'open_curly = "{";',
     'close_curly = "}";',
@@ -19,10 +20,15 @@ EXPECTED_CLEAN = [
     'stmt =   name equals_sign integer',
     'semicolon',
     '| open_curly integer   close_curly',
+    '{',
+    'this is some code;',
+    '"this is an inner string";',
+    '}',
     "| EMPTY;"
 ]
 
 EXPECTED_COMBINED = [
+    r'%return int',
     'semicolon = ";";',
     'open_curly = "{";',
     'close_curly = "}";',
@@ -33,7 +39,7 @@ EXPECTED_COMBINED = [
     'name = "[a-zA-Z][a-zA-Z0-9_]*";',
     "integer = '[1-9][0-9]*';",
     'PROGRAM   = stmt;',
-    'stmt =   name equals_sign integer semicolon | open_curly integer   close_curly | EMPTY;'
+    'stmt =   name equals_sign integer semicolon | open_curly integer   close_curly { this is some code; "this is an inner string"; } | EMPTY;'
 ]
 
 

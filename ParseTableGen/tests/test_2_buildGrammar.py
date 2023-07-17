@@ -32,10 +32,10 @@ class TestBuildgrammar(unittest.TestCase):
             self.assertEqual(EXP_TERMS[key], val, 'Terminal definition is not expected')
 
         EXP_RULES = [
-            Rule(0, 'PROGRAM', ['stmt']),
-            Rule(1, 'stmt', ['name', 'equals_sign', 'integer', 'semicolon']),
-            Rule(2, 'stmt', ['open_curly', 'integer', 'close_curly']),
-            Rule(3, "stmt", [])
+            Rule(0, 'PROGRAM', ['stmt'], None),
+            Rule(1, 'stmt', ['name', 'equals_sign', 'integer', 'semicolon'], None),
+            Rule(2, 'stmt', ['open_curly', 'integer', 'close_curly'], None),
+            Rule(3, "stmt", [], None)
         ]
 
         self.assertEqual(len(EXP_RULES), len(g.rules), 'Len of rules not equal')
@@ -43,6 +43,8 @@ class TestBuildgrammar(unittest.TestCase):
         for exp, act in zip(EXP_RULES, g.rules):
             self.assertEqual(exp, act, "Rule definition is not as expected")
 
+        self.assertEqual('this is some code; "this is an inner string";', g.rules[2].code)
+        self.assertEqual('int', g.directives['return'])
         self.assertEqual("PROGRAM", g.startSymbol, "Start symbol not equal")
 
     # TODO invalid test files

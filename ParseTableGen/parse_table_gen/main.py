@@ -9,6 +9,7 @@ from parse_table_gen.ebnf_grammer import parse_grammer, Grammer
 from parse_table_gen.first_and_follow import FirstAndFollow
 from parse_table_gen.lalr1_automata import LALR1Automata, ParseTable, Action
 from parse_table_gen.consts import END
+from parse_table_gen.errors import PTGError
 
 
 def parse_ebnf_file(filename: str) -> Grammer:
@@ -17,6 +18,11 @@ def parse_ebnf_file(filename: str) -> Grammer:
     del cleanLines
 
     return parse_grammer(combinedLines)
+
+
+# TODO for each rule, generate a function with the specified code block
+# TODO make a lookup table for each rule that points to the generated func
+# TODO update parser to call each func when a reduce action occurs
 
 
 def main():
@@ -38,11 +44,23 @@ def main():
         print("Cannot parse grammer:", err)
         exit(1)
 
-    ff = FirstAndFollow(grammer)
+    try:
+        ff = FirstAndFollow(grammer)
+    except PTGError as err:
+        print("Unable to compute first-and-follow:", err)
+        exit(1)
 
-    lalr = LALR1Automata(grammer, ff)
+    try:
+        lalr = LALR1Automata(grammer, ff)
+    except PTGError as err:
+        print("Unable to compute LALR(1) Automata:", err)
+        exit(1)
 
-    table = ParseTable(lalr)
+    try:
+        table = ParseTable(lalr)
+    except PTGError as err:
+        print("Unable to generate parse table:", err)
+        exit(1)
 
     with open(args.output_file, mode='w') as f:
         f.write(

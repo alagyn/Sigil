@@ -52,8 +52,6 @@ class TestParseTable(unittest.TestCase):
         lalr = LALR1Automata(grammer, ff)
         table = ParseTable(lalr)
 
-        print(table.symbolList)
-
         # symbol order S A B b a END
 
         # yapf: disable

@@ -1,13 +1,16 @@
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set, Tuple, Optional
 import re
+
+from parse_table_gen.errors import PTGError
 
 
 class Rule:
 
-    def __init__(self, id: int, nonterm: str, symbols: List[str]) -> None:
+    def __init__(self, id: int, nonterm: str, symbols: List[str], code: Optional[str]) -> None:
         self.id = id
         self.nonterm = nonterm
         self.symbols = symbols
+        self.code = code
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Rule):
@@ -60,7 +63,13 @@ class Rule:
 
 class Grammer:
 
-    def __init__(self, terminals: List[Tuple[str, str]], rules: List[Rule], nulls: Set[str]) -> None:
+    def __init__(
+        self,
+        terminals: List[Tuple[str, str]],
+        rules: List[Rule],
+        nulls: Set[str],
+        directives: Dict[str, Optional[str]]
+    ) -> None:
         # List of each rule
         self.rules = rules
         # Set of nonterminals that can go to null
@@ -80,9 +89,13 @@ class Grammer:
         # Set the start symbol to the first rule
         self.startSymbol = self.rules[0].nonterm
 
+        self.directives = directives
 
-TERMINAL_RE = re.compile(r'(?P<name>\w+)\s*=\s*(?P<regex>(\'[^\']+\')|("[^"]+"));')
-RULE_RE = re.compile(r'(?P<nonterm>\w+)\s*=\s*(?P<symbols>(\w+(\s+\w+)*)(\s*\|\s*\w+(\s+\w+)*)*)\s*;')
+
+TERMINAL_RE = re.compile(r'(?P<name>\w+)\s*=\s*(?P<regex>(\'[^\']+\')|("[^"]+"))\s*;')
+TOTAL_RULE_RE = re.compile(r'(?P<nonterm>\w+)\s*=(?P<rules>.+);$')
+RULE_RE = re.compile(r'(?P<symbols>\w+(\s+\w+)*)(\s*\{(?P<code>[^{}]*)\})?')
+DIRECTIVE_RE = re.compile(r'\%(?P<name>\w+)\s+(?P<value>.*)')
 
 
 def parse_grammer(lines: List[str]) -> Grammer:
@@ -92,9 +105,23 @@ def parse_grammer(lines: List[str]) -> Grammer:
     nonterminals = set()
     nulls = set()
     ruleId = 0
+    directives: Dict[str, Optional[str]] = {}
 
     error = False
     for line in lines:
+        m = DIRECTIVE_RE.fullmatch(line)
+        if m is not None:
+            name = m.group('name')
+            value = m.group('value')
+
+            if name in directives:
+                print(f"Grammer: Duplicated directive: {name}")
+                error = True
+                continue
+
+            directives[name] = value
+            continue
+
         m = TERMINAL_RE.fullmatch(line)
         if m is not None:
             name = m.group("name")
@@ -104,18 +131,20 @@ def parse_grammer(lines: List[str]) -> Grammer:
             else:
                 regex = regex.strip("'")
             if name in terminalNames:
-                raise RuntimeError(f'Duplicate terminal definition: "{name}"')
+                print(f'Grammer: Duplicate terminal definition: "{name}"')
+                error = True
+                continue
 
             terminals.append((name, regex))
             terminalNames.add(name)
             continue
 
-        m = RULE_RE.fullmatch(line)
+        m = TOTAL_RULE_RE.fullmatch(line)
         if m is not None:
             nonterm = m.group("nonterm")
-            rule_list = m.group("symbols").split('|')
-            for symbol_str in rule_list:
-                symbol_str = symbol_str.strip()
+            rule_list_str = m.group("rules")
+            for rule in RULE_RE.finditer(rule_list_str):
+                symbol_str = rule.group('symbols').strip()
                 symbols = []
                 for x in symbol_str.split(" "):
                     x = x.strip()
@@ -126,7 +155,9 @@ def parse_grammer(lines: List[str]) -> Grammer:
                 for x in symbols:
                     if x == "EMPTY":
                         if len(symbols) > 1:
-                            raise RuntimeError("EMPTY must be specified in it's own rule")
+                            print("EMPTY must be specified in its own rule")
+                            error = True
+                            continue
                         nulls.add(nonterm)
                         gotNull = True
 
@@ -134,23 +165,27 @@ def parse_grammer(lines: List[str]) -> Grammer:
                     symbols = []
 
                 nonterminals.add(nonterm)
-                rules.append(Rule(ruleId, nonterm, symbols))
+                code = rule.group('code')
+                if code is not None:
+                    code = code.strip()
+                rules.append(Rule(ruleId, nonterm, symbols, code))
                 ruleId += 1
             continue
 
-        print("Invalid line:", line)
-        print("Previous rule:", rules[-1])
+        print("Grammer: Invalid line:", line)
         error = True
 
     if error:
-        raise RuntimeError("Bad Parse")
+        raise PTGError("Bad Parse")
 
     for rule in rules:
         for symbol in rule.symbols:
             if symbol not in terminalNames and symbol not in nonterminals:
-                raise RuntimeError(f"Missing terminal/nonterminal definitions for symbol: {symbol}")
+                raise PTGError(f"Missing terminal/nonterminal definitions for symbol: {symbol}")
 
         if rule.nonterm in terminals:
-            raise RuntimeError(f'Symbol defined as both a terminal and nonterminal: "{rule.nonterm}"')
+            raise PTGError(f'Symbol defined as both a terminal and nonterminal: "{rule.nonterm}"')
 
-    return Grammer(terminals, rules, nulls)
+    # TODO warnings for unused symbols
+
+    return Grammer(terminals, rules, nulls, directives)

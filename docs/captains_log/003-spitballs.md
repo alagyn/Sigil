@@ -56,3 +56,8 @@ Allow kebab case in names, underscores suck
 this-name = asdf.potat()
 this might be rough to implement in grammer
 
+### aliases
+`alias` keyword that functions like `typedef` but is a generic alias for any two names
+Use to make short names for complex types
+Use to make short names for deeply nested variables without make another reference?
+Use to make nested module aliases
