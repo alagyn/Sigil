@@ -1,3 +1,7 @@
+---
+tag: devlog
+---
+
 Stardate - 7/17/23
 
 After thinking about how to get my parser to generate syntax trees, I realized it would
@@ -38,3 +42,5 @@ users can include, and can call functions to get whatever output they define in 
 grammar's code blocks. Granted, I may still need to implement a "prologue" section
 but really, I am only envisioning needing to allow the user to include any header files
 they need, but that can probably be done with a directive.
+
+[[011-hermes]]

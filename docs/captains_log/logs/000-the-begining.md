@@ -1,3 +1,7 @@
+---
+tag: devlog
+---
+
 Stardate - 2/14/2022
 
 Today marks the day that a new adventure will start. I am a fresh college grad and am on the hunt for employment, but in the meantime, I have a new project: creating my own programming language. Suffice it to say that this is not a trivial objective. Desite how many programmers there are, I'd say very few have ever had to ever care about *how* the languages they are using are actually constructed. I myself only know the basics. I had wanted to take an elective on compilers during college, but it never worked out with my schedule meaning this project will be entirely self taught. I will try to set my expectations low, I do not expect to create the next great thing, but I want to challenge myself with this. I have a tendency to never finish projects, but I intend to keep working on this until I have *something* resembling a working product.
@@ -25,3 +29,5 @@ THE BIG THINGS:
 * Python-like iteration
 * Java-like packages
 * Cpp-like threads
+
+[[001-books]]

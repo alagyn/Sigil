@@ -1,3 +1,7 @@
+---
+tag: devlog
+---
+
 Stardate - 07/16/23
 
 I found a bug in my LALR parse table generator, where I was using the follow
@@ -17,3 +21,5 @@ a reduction according to rule 0, and just offsetting reduce lookups by 1.
 
 My next steps will be to continue work on the parser in order to generate abstract
 syntax trees.
+
+[[010-buffalo]]

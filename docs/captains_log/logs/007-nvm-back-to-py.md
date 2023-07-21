@@ -1,3 +1,7 @@
+---
+tag: devlog
+---
+
 Stardate - 4/22/22
 
 While I was beginning to write out some early descriptions of Sigil's grammer, I had a fantastic idea to have my compiler be able to read in some EBNF rules and use that to parse the language.
@@ -17,3 +21,5 @@ I don't know yet whether the final version of the Sigil compiler will have pytho
 In order for Sigil's grammer to be able to parse everything correctly, it needs to be converted into an equivalent LR(1) grammer (for reasons that I don't fully understand, but has to do with Chomsky's Heirarchy).
 
 In order to create a parser for an LR(1) grammer we need to generate the so called "First" and "Follow" sets for the grammer using the EBNF. There are plenty of descriptions of this algorithm in various resources, but I was unable to find any "good" pseudo-code so I am going to start writing some for any algorithms I encounter.
+
+[[008-whoops]]

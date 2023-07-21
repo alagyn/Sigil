@@ -1,3 +1,7 @@
+---
+tag: devlog
+---
+
 Herein lies my thoughts on the languages that I am using as references.
 
 Primarily this will be C++, Java, and Python but I may branch out with thoughts on other languages that I have used in the past, or steal ideas from other languages.
@@ -81,3 +85,5 @@ Despite this, there are still quite a lot of things I DO like about python
 * array slicing
 * ternary if-else using keywords
 * __init__.py allowing setup code when importing a package, but really I find this to be bad practice
+
+[[004-whats-in-the-name]]

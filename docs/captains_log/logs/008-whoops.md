@@ -1,3 +1,7 @@
+---
+tag: devlog
+---
+
 Stardate - 7/10/23
 
 Yeah, so... it's been over a year since the last devlog. My tendency to burnout struck yet again, combined with the fact that I successfully acquired gainful employment, which, believe it or not, is a real time-sink. That being said, Sigil has sat in the back of my mind and stewed for the last year and I've never given up the idea. I started working on it again a couple weeks ago and I'm finally getting around to writing the next log.
@@ -9,3 +13,5 @@ So, what I have done since then: I have rewritten a lot of the EBNF parser as I 
 As for development on the compiler, I have made good progress. I have a working scanner that also acts as a preprocessor filtering out comments. I think it is of rather standard construction, it reads a char at a time and returns "maximal-munch" tokens via regexes specified in the grammar file. I have also implemented the beginnings of the parser, which is a simple beast at the moment, and doesn't create syntax trees yet, but it does work to validate files.
 
 Grammar-wise, I have written a lot of Sigil's grammar. Most of it has gone smoothly, but I am starting to run into parse table conflicts meaning that Sigil is not LALR(1) compatible without some grammar massaging. I have paused to look into another extension to LR(1) grammars called IELR(1) (Inadequacy-elimination LR) which is a method of conflict-resolution that should help smooth out some of the issues. The only obstacle is that the only good reference for the algorithm is the research paper it comes from which is a hard read and has been slow to process. Bison has an implementation of it but that codebase is very different from my own, so I am wary to try and learn anything from it.
+
+[[009-big-fixes]]

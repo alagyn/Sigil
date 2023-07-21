@@ -1,3 +1,7 @@
+---
+tag: devlog
+---
+
 Stardate - 4/16/22
 
 I have chosen to write my compiler in C++, as this will most likely require a low-level touch.
@@ -37,3 +41,7 @@ sgc flow
 But first, I need to work on the parser. Now there are existing parser-generators (YACC, Bison, LEXX, etc) but I am here for the challenge so I am going to write my own. I'd like it to generate syntax trees using files that contain an EBNF description of Sigil as an input. 
 
 IDEA: later, for efficiency, look into having a compiler for the ebnf into a serializable format that doesn't need to be parsed or error checked.
+
+[[007-nvm-back-to-py]]
+
+

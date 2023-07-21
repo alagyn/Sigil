@@ -1,3 +1,7 @@
+---
+tag: devlog
+---
+
 This log will contain what books I am reading as well as my thoughts on them.
 
 To start off with, I am reading: "Compiler Construction" by William M. Waite and Herhard Goos.
@@ -16,3 +20,5 @@ Compilers: Principles, Techniques, and Tools. (Second Edition). Aho, Lam, Sethi,
 
 Programming Language Pragmatics. (Third Edition). Michael L. Scott. ISBN: 978-0-12-374514-9.
 (2009) Looks about the same as the last one (940 pages)
+
+[[002-the-forebearers]]
