@@ -2,7 +2,7 @@
 	"nodes":[
 		{"type":"file","file":"ideas/numerics.md","id":"81b3ee849b85c83d","x":-903,"y":-340,"width":250,"height":180},
 		{"type":"file","file":"ideas/garbage-collection.md","id":"61b86a4025a8cf9f","x":70,"y":200,"width":390,"height":365},
-		{"type":"text","text":"# Random ideas","id":"a39404b32f7193f7","x":-149,"y":-40,"width":339,"height":95},
+		{"type":"text","text":"# Random ideas","id":"a39404b32f7193f7","x":-149,"y":-40,"width":339,"height":95,"color":"5"},
 		{"type":"text","text":"### Regex\nBe nice to have regex be \na language construct","id":"c359ff0547f3edc0","x":190,"y":-569,"width":270,"height":169},
 		{"type":"text","text":"Perl has raw regex","id":"3e189c6461f07102","x":200,"y":-753,"width":250,"height":60},
 		{"type":"text","text":"Have RE be a primitive?","id":"faae061bd2a6148a","x":202,"y":-909,"width":250,"height":60},

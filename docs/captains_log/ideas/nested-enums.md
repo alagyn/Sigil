@@ -1,4 +1,7 @@
-## Nested enums
+---
+tag: idea
+---
+
 ```
 enum ASDF
 {

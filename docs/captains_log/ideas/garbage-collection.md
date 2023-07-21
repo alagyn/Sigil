@@ -1,4 +1,6 @@
-### Garbage collection
+---
+tag: idea
+---
 
 Probably want pass-by-reference?
 Can do a smart pointer impl pretty easy

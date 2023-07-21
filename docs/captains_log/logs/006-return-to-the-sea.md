@@ -21,8 +21,9 @@ This is something I want to avoid with Sigil.
 
 Since I have chosen ".sg" as my file extension, I am naming my compiler "sgc".
 I want sgc to act something like to this in the simplest case
-
+```bash
 sgc --source [root source dir] --main [path to main file] --out [executable name]
+```
 
 This way, all you have to specify is the root of your source tree and leave the rest to the compiler.
 Adding a "main" argument allows for multiple insertion points to be defined. Similar to java, but this is defined at compile time.

@@ -1,3 +1,7 @@
+---
+tag: idea
+---
+
 Want to specify array
 vs deque
 
