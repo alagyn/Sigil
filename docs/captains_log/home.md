@@ -1,5 +1,4 @@
 
-
 ```dataview
 TABLE file.cday as "Created"
 FROM #devlog 
@@ -11,7 +10,7 @@ LIMIT 5
 ```dataview
 TASK
 WHERE !completed
-
+GROUP BY file.name
 ```
 
 
