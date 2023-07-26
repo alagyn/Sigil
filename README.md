@@ -1,3 +1,5 @@
+<img src="docs/images/SigilMk7-512.png" width="200" align="right">
+
 # Sigil
 A strongly-typed, object oriented, high-level language
 
