@@ -7,3 +7,5 @@ The type safety of C++, combined with the syntactic sugar of Python.
 
 ## Docs
 Check out the [language samples](lang_samples) folder to see examples of the Sigil in use.  
+
+# This is still very early in development. Maybe check out [Hermes](https://github.com/alagyn/Hermes) instead
