@@ -1,0 +1,341 @@
+%include <memory>
+%include <sigil/syntaxTree.h>
+
+%return std::shared_ptr<sigil::ASTNode>
+
+%using std
+%using sigil
+
+# The starting rule, must be first
+program = definitions { return $0; };
+definitions
+    = definition { return $0; }
+    | definition definitions 
+    { 
+        auto def = reinterpret_pointer_cast<DefinitionNode>($0);
+        def->next = $1;
+        return $0;
+    }
+    ;
+
+# Char declarations
+SEMICOLON = ";";
+OPEN_CURLY = "{";
+CLOSE_CURLY = "}";
+OPEN_PAREN = "\(";
+CLOSE_PAREN = "\)";
+OPEN_SQUARE = "\[";
+CLOSE_SQUARE = "\]";
+COMMA = ",";
+COLON = ":";
+
+# Operators
+OP_EQUALS = "=";
+OP_PLUS = "\+";
+OP_MINUS = "-";
+OP_STAR = "\*";
+OP_SLASH = "/";
+OP_POW = "\*\*";
+OP_DOT = '\.';
+OP_LTEQ = "<=";
+OP_GTEQ = ">=";
+OP_LT = "<";
+OP_GT = ">";
+
+# Keywords
+KW_DO = "do";
+KW_ELSE = "else";
+KW_FOR = "for";
+KW_IN = "in";
+KW_IF = "if";
+KW_NOT = "not";
+KW_RETURN = "return";
+KW_TO = "to";
+KW_WHILE = "while";
+KW_ABSTRACT = "abstract";
+KW_ENUM = "enum";
+KW_CLASS = "class";
+
+# Literals
+LIT_INT = '[1-9]\d*';
+LIT_FLOAT = "\d+.\d+"; # TODO scientific notation?
+
+DOUBLE_QUOTE_STR = '"([^"]|(\\"))*"';
+SINGLE_QUOTE_STR = "'([^']|(\\'))*'";
+lit_string
+    = DOUBLE_QUOTE_STR { return make_shared<ExprNode>($0); }
+    | SINGLE_QUOTE_STR { return make_shared<ExprNode>($0); }
+    ;
+
+lit_list = OPEN_SQUARE args CLOSE_SQUARE { return nullptr; };
+lit_set = OPEN_CURLY args CLOSE_CURLY { return nullptr; };
+lit_map = OPEN_CURLY map_list CLOSE_CURLY { return nullptr; };
+map_list
+    = map_expression { return nullptr; }
+    | map_expression COMMA map_list { return nullptr; }
+    ;
+
+map_expression = expression COLON expression { return nullptr; };
+
+literal
+    = LIT_INT
+    {
+        int val = stoi($0);
+        return make_shared<ExprNode>(val);
+    }
+    | LIT_FLOAT
+    {
+        double val = stod($0);
+        return make_shared<ExprNode>(val);
+    }
+    | lit_set { return $0; }
+    | lit_string
+    {
+        return $0;
+    }
+    | lit_list { return $0; }
+    | lit_map { return $0; }
+    ;
+
+# type names
+TYPE_ARRAY = "array";
+TYPE_LIST = "list";
+TYPE_MAP = "map";
+TYPE_SET = "set";
+TYPE_STR = "str";
+TYPE_INT = "int";
+TYPE_FLOAT = "float";
+
+type
+    = TYPE_ARRAY OP_LT type OP_GT
+    {
+        return make_shared<DataTypeNode>(
+            PrimitiveType::Array, $type
+        );
+    }
+    | TYPE_LIST OP_LT type OP_GT
+    {
+        return make_shared<DataTypeNode>(
+            PrimitiveType::List, $type
+        );
+    }
+    | TYPE_MAP OP_LT type COMMA type OP_GT
+    {
+        return make_shared<DataTypeNode>(
+            PrimitiveType::Map, $2, $4
+        );
+    }
+    | TYPE_SET OP_LT type OP_GT
+    {
+        return make_shared<DataTypeNode>(
+            PrimitiveType::Set, $type
+        );
+    }
+    | TYPE_STR
+    {
+        return make_shared<DataTypeNode>(
+            PrimitiveType::Str
+        );
+    }
+    | TYPE_INT
+    { 
+        return make_shared<DataTypeNode>(
+            PrimitiveType::Int
+        );
+    }
+    | TYPE_FLOAT
+    { 
+        return make_shared<DataTypeNode>(
+            PrimitiveType::Float
+        );
+    }
+    | NAME
+    { 
+        return make_shared<DataTypeNode>(
+            $0
+        );
+    }
+    ;
+
+# Access modifiers
+ACC_PUBLIC = "public";
+ACC_PRIVATE = "private";
+ACC_READONLY = "readonly";
+ACC_SHARED = "shared";
+
+access_modifier
+    = ACC_PUBLIC { return make_shared<AccessModNode>(AccessModifier::Public); }
+    | ACC_PRIVATE { return make_shared<AccessModNode>(AccessModifier::Private); }
+    | ACC_READONLY { return make_shared<AccessModNode>(AccessModifier::Readonly); }
+    | ACC_SHARED { return make_shared<AccessModNode>(AccessModifier::Shared); }
+    ;
+
+# This goes after all the builtins
+NAME = "[a-zA-Z][a-zA-Z0-9_]*";
+
+definition
+    = func_definition { return $0; }
+    | class_definition { return $0; }
+    | enum_definition { return $0; }
+    ;
+
+# Generic curly bracket body
+body
+    = OPEN_CURLY statements CLOSE_CURLY { return $1; }
+    | OPEN_CURLY CLOSE_CURLY { return nullptr; } # Allow for no statements without needing an epsilon
+    ;
+
+
+# TODO probably need to move the abstract to its own thing?
+func_access
+    = access_modifier { return nullptr; }
+    | KW_ABSTRACT { return nullptr; }
+    | EMPTY { return nullptr; }
+    ;
+
+func_definition
+    = func_access type NAME OPEN_PAREN arg_definitions CLOSE_PAREN body { return nullptr; }
+    | func_access type NAME OPEN_PAREN CLOSE_PAREN body { return nullptr; }
+    ;
+
+arg_definitions
+    = argument { return nullptr; }
+    | argument COMMA arg_definitions { return nullptr; }
+    ;
+
+argument
+    = type NAME OP_EQUALS expression { return nullptr; } # TODO is expression the right thing here? The value should be evaluatable at compile time
+    | type NAME { return nullptr; }
+    ;
+
+statements
+    = statement { return $0; }
+    | statement statements 
+    { 
+        auto stmt = reinterpret_pointer_cast<Statement>($0);
+        stmt->next = $1;
+        return $0;
+    } # Recursion
+    ;
+
+statement
+    = statement_body SEMICOLON { return nullptr; } # This enforces semicolons for all simple statements
+    | body { return nullptr; } # Allow arbitrary scopes
+    | if_statement { return nullptr; }
+    | while_statement { return nullptr; }
+    | do_while_statement { return nullptr; }
+    | for_statement { return nullptr; }
+    ;
+
+statement_body
+    = assignment { return nullptr; }
+    | return_statement { return nullptr; }
+    | expression { return nullptr; }
+    ;
+
+if_statement = KW_IF expression body else_statement { return nullptr; };
+else_statement
+    = KW_ELSE body { return nullptr; }
+    | KW_ELSE if_statement { return nullptr; } # This will recurse for more else-ifs
+    ;
+
+while_statement = KW_WHILE expression body { return nullptr; };
+do_while_statement = KW_DO body KW_WHILE expression SEMICOLON { return nullptr; };
+
+for_statement
+    = KW_FOR NAME KW_IN expression body { return nullptr; }
+    | KW_FOR NAME KW_IN expression KW_TO expression body { return nullptr; }
+    ;
+
+return_statement = KW_RETURN expression { return nullptr; };
+
+assignment
+    = NAME OP_EQUALS assign_expr { return nullptr; }
+    | type NAME OP_EQUALS assign_expr { return nullptr; }
+    ;
+
+assign_expr
+    = expression { return nullptr; }
+    | expression KW_IF expression KW_ELSE expression { return nullptr; } # x = 12 if b else 15;
+    ;
+
+# Expression, defines the order of operations
+expression
+    = expression OP_PLUS term { return make_shared<ExprNode>(ExprType::Add, $0, $2); }
+    | expression OP_MINUS term { return make_shared<ExprNode>(ExprType::Sub, $0, $2); }
+    | term { return $0; }
+    ;
+term
+    = term OP_STAR factor { return make_shared<ExprNode>(ExprType::Mul, $0, $2); }
+    | term OP_SLASH factor { return make_shared<ExprNode>(ExprType::Div, $0, $2); }
+    | factor { return $0; }
+    ;
+factor
+    = factor OP_POW pow_term { return make_shared<ExprNode>(ExprType::Pow, $0, $2); }
+    | pow_term { return $0; }
+    ;
+
+pow_term
+    = OP_MINUS pow_term { return make_shared<ExprNode>(ExprType::Neg, $1, nullptr); } # Negation
+    | KW_NOT pow_term { return make_shared<ExprNode>(ExprType::Not, $1, nullptr); }
+    | OPEN_PAREN expression CLOSE_PAREN { return $1; }
+    | function_call { return $0; }
+    | subscript { return $0; }
+    | literal { return $0; }
+    | NAME { return nullptr; }
+    ;
+
+# map/list subscript
+subscript 
+    = expression OPEN_SQUARE expression CLOSE_SQUARE
+    {
+
+        return make_shared<ExprNode>(ExprType::Subscript, $0, $1);
+    }
+    ;
+
+# Functions
+function_call
+    = NAME OPEN_PAREN args CLOSE_PAREN { return nullptr; }
+    | NAME OPEN_PAREN CLOSE_PAREN { return nullptr; }
+    ;
+
+args
+    = expression { return nullptr; }
+    | expression COMMA args { return nullptr; }
+    ;
+
+# Class
+class_definition_access
+    = ACC_PUBLIC { return nullptr; }
+    | ACC_PRIVATE { return nullptr; }
+    | EMPTY { return nullptr; }
+    ;
+
+class_definition
+    = class_definition_access KW_CLASS NAME OPEN_PAREN NAME CLOSE_PAREN class_body { return nullptr; }
+    | class_definition_access KW_CLASS NAME class_body { return nullptr; }
+    ;
+
+class_body
+    = OPEN_CURLY class_statements CLOSE_CURLY { return nullptr; }
+    | OPEN_CURLY CLOSE_CURLY { return nullptr; }
+    ;
+
+class_statements
+    = access_modifier body { return nullptr; } # Vars must be declared in an access modifer block
+    | access_modifier func_definition { return nullptr; }
+    ;
+
+# Enum
+enum_definition = class_definition_access KW_ENUM NAME OPEN_CURLY enum_statements CLOSE_CURLY
+{ return nullptr; };
+enum_statements
+    = enum_statement { return nullptr; }
+    | enum_statement enum_statements { return nullptr; }
+    ;
+
+enum_statement
+    = NAME SEMICOLON { return nullptr; }
+    | NAME OP_EQUALS LIT_INT SEMICOLON { return nullptr; }
+    ;

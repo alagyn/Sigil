@@ -1,11 +1,14 @@
+#include <fstream>
 #include <iostream>
 #include <vector>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
-#include <inc/parser.h>
-#include <inc/scanner.h>
+#include <hermes/parser.h>
+#include <hermes/scanner.h>
+
+#include <sigil/syntaxTree.h>
 
 using namespace std;
 
@@ -52,11 +55,13 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    auto scanner = std::make_shared<sigil::Scanner>(filename);
-    sigil::Parser parser(scanner);
+    auto input = std::make_shared<std::ifstream>(filename);
+    auto scanner = hermes::Scanner::New(input);
+
+    hermes::Parser parser;
     try
     {
-        parser.parse();
+        parser.parse(scanner);
     }
     catch(const std::runtime_error& err)
     {

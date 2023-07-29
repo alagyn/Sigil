@@ -1,0 +1,3 @@
+[submodule "deps/Hermes"]
+	path = deps/Hermes
+	url = https://github.com/alagyn/Hermes
