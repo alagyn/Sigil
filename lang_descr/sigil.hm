@@ -10,10 +10,9 @@
 program = definitions { return $0; };
 definitions
     = definition { return $0; }
-    | definition definitions 
-    { 
-        auto def = reinterpret_pointer_cast<DefinitionNode>($0);
-        def->next = $1;
+    | definition definitions
+    {
+        $0->next = $1;
         return $0;
     }
     ;
@@ -67,15 +66,39 @@ lit_string
     | SINGLE_QUOTE_STR { return make_shared<ExprNode>($0); }
     ;
 
-lit_list = OPEN_SQUARE args CLOSE_SQUARE { return nullptr; };
-lit_set = OPEN_CURLY args CLOSE_CURLY { return nullptr; };
-lit_map = OPEN_CURLY map_list CLOSE_CURLY { return nullptr; };
-map_list
-    = map_expression { return nullptr; }
-    | map_expression COMMA map_list { return nullptr; }
+lit_list
+    = OPEN_SQUARE args CLOSE_SQUARE
+    {
+        return make_shared<ExprNode>(ExprType::LitList, $args, nullptr);
+    }
+    ;
+lit_set
+    = OPEN_CURLY args CLOSE_CURLY 
+    { 
+        return make_shared<ExprNode>(ExprType::LitSet, $args, nullptr);
+    };
+lit_map
+    = OPEN_CURLY map_list CLOSE_CURLY
+    { 
+        return make_shared<ExprNode>(ExprType::LitMap, $map_list, nullptr);
+    }
     ;
 
-map_expression = expression COLON expression { return nullptr; };
+map_list
+    = map_expression { return $0; }
+    | map_expression COMMA map_list
+    { 
+        $0->next = $2;
+        return $0;
+    }
+    ;
+
+map_expression
+    = expression COLON expression
+    {
+        return make_shared<ExprNode>(ExprType::LitMap, $0, $2);
+    }
+    ;
 
 literal
     = LIT_INT
@@ -138,19 +161,19 @@ type
         );
     }
     | TYPE_INT
-    { 
+    {
         return make_shared<DataTypeNode>(
             PrimitiveType::Int
         );
     }
     | TYPE_FLOAT
-    { 
+    {
         return make_shared<DataTypeNode>(
             PrimitiveType::Float
         );
     }
     | NAME
-    { 
+    {
         return make_shared<DataTypeNode>(
             $0
         );
@@ -172,6 +195,12 @@ access_modifier
 
 # This goes after all the builtins
 NAME = "[a-zA-Z][a-zA-Z0-9_]*";
+name
+    = NAME
+    {
+        return make_shared<ExprNode>(ExprType::Name, $0);
+    }
+    ;
 
 definition
     = func_definition { return $0; }
@@ -188,14 +217,14 @@ body
 
 # TODO probably need to move the abstract to its own thing?
 func_access
-    = access_modifier { return nullptr; }
+    = access_modifier { return $0; }
     | KW_ABSTRACT { return nullptr; }
     | EMPTY { return nullptr; }
     ;
 
 func_definition
-    = func_access type NAME OPEN_PAREN arg_definitions CLOSE_PAREN body { return nullptr; }
-    | func_access type NAME OPEN_PAREN CLOSE_PAREN body { return nullptr; }
+    = func_access type name OPEN_PAREN arg_definitions CLOSE_PAREN body { return nullptr; }
+    | func_access type name OPEN_PAREN CLOSE_PAREN body { return nullptr; }
     ;
 
 arg_definitions
@@ -204,33 +233,32 @@ arg_definitions
     ;
 
 argument
-    = type NAME OP_EQUALS expression { return nullptr; } # TODO is expression the right thing here? The value should be evaluatable at compile time
-    | type NAME { return nullptr; }
+    = type name OP_EQUALS expression { return nullptr; } # TODO is expression the right thing here? The value should be evaluatable at compile time
+    | type name { return nullptr; }
     ;
 
 statements
     = statement { return $0; }
-    | statement statements 
-    { 
-        auto stmt = reinterpret_pointer_cast<Statement>($0);
-        stmt->next = $1;
+    | statement statements
+    {
+        $0->next = $1;
         return $0;
     } # Recursion
     ;
 
 statement
-    = statement_body SEMICOLON { return nullptr; } # This enforces semicolons for all simple statements
-    | body { return nullptr; } # Allow arbitrary scopes
-    | if_statement { return nullptr; }
-    | while_statement { return nullptr; }
-    | do_while_statement { return nullptr; }
-    | for_statement { return nullptr; }
+    = statement_body SEMICOLON { return $0; } # This enforces semicolons for all simple statements
+    | body { return $0; } # Allow arbitrary scopes
+    | if_statement { return $0; }
+    | while_statement { return $0; }
+    | do_while_statement { return $0; }
+    | for_statement { return $0; }
     ;
 
 statement_body
-    = assignment { return nullptr; }
-    | return_statement { return nullptr; }
-    | expression { return nullptr; }
+    = assignment { return $0; }
+    | return_statement { return $0; }
+    | expression { return $0; }
     ;
 
 if_statement = KW_IF expression body else_statement { return nullptr; };
@@ -243,15 +271,15 @@ while_statement = KW_WHILE expression body { return nullptr; };
 do_while_statement = KW_DO body KW_WHILE expression SEMICOLON { return nullptr; };
 
 for_statement
-    = KW_FOR NAME KW_IN expression body { return nullptr; }
-    | KW_FOR NAME KW_IN expression KW_TO expression body { return nullptr; }
+    = KW_FOR name KW_IN expression body { return nullptr; }
+    | KW_FOR name KW_IN expression KW_TO expression body { return nullptr; }
     ;
 
 return_statement = KW_RETURN expression { return nullptr; };
 
 assignment
-    = NAME OP_EQUALS assign_expr { return nullptr; }
-    | type NAME OP_EQUALS assign_expr { return nullptr; }
+    = name OP_EQUALS assign_expr { return nullptr; }
+    | type name OP_EQUALS assign_expr { return nullptr; }
     ;
 
 assign_expr
@@ -279,30 +307,79 @@ pow_term
     = OP_MINUS pow_term { return make_shared<ExprNode>(ExprType::Neg, $1, nullptr); } # Negation
     | KW_NOT pow_term { return make_shared<ExprNode>(ExprType::Not, $1, nullptr); }
     | OPEN_PAREN expression CLOSE_PAREN { return $1; }
-    | function_call { return $0; }
-    | subscript { return $0; }
-    | literal { return $0; }
-    | NAME { return nullptr; }
+    | bottom_val { return $0; }
     ;
 
-# map/list subscript
-subscript 
-    = expression OPEN_SQUARE expression CLOSE_SQUARE
+bottom_val
+    # Function calls
+    = bottom_val OPEN_PAREN args CLOSE_PAREN
     {
+        return make_shared<ExprNode>(ExprType::Call, $bottom_val, $args);
+    }
+    | bottom_val OPEN_PAREN CLOSE_PAREN
+    {
+        return make_shared<ExprNode>(ExprType::Call, $bottom_val, nullptr);
+    }
+    # Name resolution
+    | bottom_val OP_DOT name
+    {
+        return make_shared<ExprNode>(ExprType::Dot, $bottom_val, $name);
+    }
+    # Subscript
+    | bottom_val OPEN_SQUARE expression CLOSE_SQUARE
+    {
+        return make_shared<ExprNode>(ExprType::Subscript, $0, $2);
+    }
+    # comprehensions
+    | comprehension { return $0; }
+    # Literals
+    | literal { return $0; }
+    | name { return $0; }
+    ;
 
-        return make_shared<ExprNode>(ExprType::Subscript, $0, $1);
+comprehension
+    # List comprehension
+    = OPEN_SQUARE linear_comprehension CLOSE_SQUARE
+    {
+        return $1;
+    }
+    # Set comprehension
+    | OPEN_CURLY linear_comprehension CLOSE_CURLY
+    {
+        return $1;
+    }
+    # Map comprehension
+    | OPEN_CURLY expression COLON expression KW_FOR name KW_IN expression CLOSE_CURLY
+    {
+        return nullptr;
+    }
+    | OPEN_CURLY expression COLON expression KW_FOR name KW_IN expression KW_IF expression CLOSE_CURLY
+    {
+        return nullptr;
     }
     ;
 
-# Functions
-function_call
-    = NAME OPEN_PAREN args CLOSE_PAREN { return nullptr; }
-    | NAME OPEN_PAREN CLOSE_PAREN { return nullptr; }
+linear_comprehension
+    = expression KW_FOR name KW_IN expression
+    {
+        return nullptr;
+    }
+    | expression KW_FOR name KW_IN expression KW_IF expression
+    {
+        return nullptr;
+    }
     ;
 
 args
-    = expression { return nullptr; }
-    | expression COMMA args { return nullptr; }
+    = expression
+    {
+        return $0;
+    }
+    | expression COMMA args
+    {
+        $0->next = $2;
+        return $0;
+    }
     ;
 
 # Class
@@ -313,8 +390,8 @@ class_definition_access
     ;
 
 class_definition
-    = class_definition_access KW_CLASS NAME OPEN_PAREN NAME CLOSE_PAREN class_body { return nullptr; }
-    | class_definition_access KW_CLASS NAME class_body { return nullptr; }
+    = class_definition_access KW_CLASS name OPEN_PAREN name CLOSE_PAREN class_body { return nullptr; }
+    | class_definition_access KW_CLASS name class_body { return nullptr; }
     ;
 
 class_body
@@ -328,7 +405,7 @@ class_statements
     ;
 
 # Enum
-enum_definition = class_definition_access KW_ENUM NAME OPEN_CURLY enum_statements CLOSE_CURLY
+enum_definition = class_definition_access KW_ENUM name OPEN_CURLY enum_statements CLOSE_CURLY
 { return nullptr; };
 enum_statements
     = enum_statement { return nullptr; }
@@ -336,6 +413,6 @@ enum_statements
     ;
 
 enum_statement
-    = NAME SEMICOLON { return nullptr; }
-    | NAME OP_EQUALS LIT_INT SEMICOLON { return nullptr; }
+    = name SEMICOLON { return nullptr; }
+    | name OP_EQUALS LIT_INT SEMICOLON { return nullptr; }
     ;

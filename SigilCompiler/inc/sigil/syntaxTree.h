@@ -7,14 +7,25 @@ namespace sigil {
 
 enum class ASTNodeType
 {
-    Expr
+    Error,
+    Expr,
+    Statement,
+    Datatype,
+    AccessMod,
+    Definition
 };
+
+class ASTNode;
+using ASTNodePtr = std::shared_ptr<ASTNode>;
 
 class ASTNode
 {
-};
+public:
+    ASTNode(ASTNodeType nodeType);
 
-using ASTNodePtr = std::shared_ptr<ASTNode>;
+    const ASTNodeType nodeType;
+    ASTNodePtr next;
+};
 
 enum class ExprType
 {
@@ -27,10 +38,20 @@ enum class ExprType
     Not,
     Neg,
     Name,
-    Lit_Int,
-    Lit_Float,
-    Lit_Str,
+
+    LitInt,
+    LitFloat,
+    LitStr,
+
+    // These have left set to an expr list, right == nullptr
+    LitList,
+    LitSet,
+
+    // Left is key, right is val, next is next value
+    LitMap,
+
     Call,
+    Dot,
     Subscript
 };
 
@@ -39,6 +60,7 @@ class ExprNode : public ASTNode
 public:
     ExprNode();
     ExprNode(ExprType type, ASTNodePtr left, ASTNodePtr right);
+    ExprNode(ExprType type, std::string name);
     ExprNode(std::string str_val);
     explicit ExprNode(int int_val);
     explicit ExprNode(double float_val);
@@ -98,13 +120,10 @@ public:
     AccessModifier access;
 };
 
-class Statement
+class Statement : public ASTNode
 {
 public:
     Statement();
-
-private:
-    Statement* next;
 };
 
 class DefinitionNode : public ASTNode
@@ -113,8 +132,6 @@ public:
     DefinitionNode();
 
     std::string name;
-
-    ASTNodePtr next;
 };
 
 } //namespace sigil
