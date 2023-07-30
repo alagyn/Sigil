@@ -12,6 +12,7 @@ enum class ASTNodeType
     Statement,
     Datatype,
     AccessMod,
+    SpecialMod,
     Definition
 };
 
@@ -77,6 +78,8 @@ public:
 enum class PrimitiveType
 {
     Error,
+    // Used when we get a user defined type
+    Unknown,
     Int,
     Float,
     Str,
@@ -84,7 +87,9 @@ enum class PrimitiveType
     List,
     Map,
     Set,
-    User
+    Func,
+    Class,
+    Enum
 };
 
 class DataTypeNode : public ASTNode
@@ -98,14 +103,16 @@ public:
     DataTypeNode(std::string name);
 
     PrimitiveType type;
+    // Normal types, the map key type, or the return type
     ASTNodePtr subtype1;
-    // Subtype2 only used for maps?
+    // map value type, or the function arg list
     ASTNodePtr subtype2;
     std::string name;
 };
 
-enum class AccessModifier
+enum class AccessMod
 {
+    Default,
     Public,
     Private,
     Readonly,
@@ -115,23 +122,83 @@ enum class AccessModifier
 class AccessModNode : public ASTNode
 {
 public:
-    AccessModNode(AccessModifier access);
+    AccessModNode(AccessMod access);
 
-    AccessModifier access;
+    AccessMod accessMod;
 };
 
-class Statement : public ASTNode
+enum class StmtType
 {
-public:
-    Statement();
+    Assign,
+    If,
+    ForIn,
+    ForTo,
+    While,
+    DoWhile,
+    Return
 };
 
-class DefinitionNode : public ASTNode
+class StmtNode : public ASTNode
 {
 public:
-    DefinitionNode();
+    StmtNode(StmtType stmtType);
 
-    std::string name;
+    StmtType stmtType;
+    // Declarations for "for" and "while" loops, and types for assignment
+    ASTNodePtr decl;
+    // Expressions for "for" and "while" continuation, and "if" checks
+    ASTNodePtr check;
+    // Second expression in "ForTo", and names for assignments
+    ASTNodePtr update;
+    // Code body
+    ASTNodePtr body;
+    // else statements, and elses for ternary
+    ASTNodePtr elseStmt;
+};
+
+enum class SpecialMod
+{
+    None,
+    Abstract,
+    Static
+};
+
+class SpecialModNode : public ASTNode
+{
+public:
+    SpecialModNode(SpecialMod specialMod);
+
+    SpecialMod specialMod;
+};
+
+enum class DefType
+{
+    Error,
+
+    // Body is the epxression used to assign. Works
+    // the same for func args
+    Var,
+
+    // Funcs use the parent type for the special mod type
+    // And body as the arg definitions
+    Func,
+
+    Class,
+    Enum
+};
+
+class DefNode : public ASTNode
+{
+public:
+    DefNode(DefType defType, ASTNodePtr dataType, std::string name);
+
+    const DefType defType;
+    const ASTNodePtr dataType;
+    const std::string name;
+
+    AccessMod accessMod;
+    SpecialMod specialMod;
+    ASTNodePtr body;
 };
 
 } //namespace sigil

@@ -69,14 +69,42 @@ DataTypeNode::DataTypeNode(
 
 DataTypeNode::DataTypeNode(std::string name)
     : ASTNode(ASTNodeType::Datatype)
-    , type(PrimitiveType::User)
+    , type(PrimitiveType::Unknown)
     , name(name)
 {
 }
 
-AccessModNode::AccessModNode(AccessModifier access)
+AccessModNode::AccessModNode(AccessMod access)
     : ASTNode(ASTNodeType::AccessMod)
-    , access(access)
+    , accessMod(access)
+{
+}
+
+SpecialModNode::SpecialModNode(SpecialMod specialMod)
+    : ASTNode(ASTNodeType::SpecialMod)
+    , specialMod(specialMod)
+{
+}
+
+DefNode::DefNode(DefType defType, ASTNodePtr dataType, std::string name)
+    : ASTNode(ASTNodeType::Definition)
+    , defType(defType)
+    , dataType(dataType)
+    , name(name)
+    , accessMod(AccessMod::Default)
+    , specialMod(SpecialMod::None)
+    , body(nullptr)
+{
+}
+
+StmtNode::StmtNode(StmtType stmtType)
+    : ASTNode(ASTNodeType::Statement)
+    , stmtType(stmtType)
+    , decl(nullptr)
+    , check(nullptr)
+    , update(nullptr)
+    , body(nullptr)
+    , elseStmt(nullptr)
 {
 }
 
