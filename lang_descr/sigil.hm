@@ -1,16 +1,21 @@
 %include <memory>
-%include <sigil/syntaxTree.h>
+%include <sigil-ast/syntaxTree.h>
 
 %return std::shared_ptr<sigil::ASTNode>
 
 %using std
 %using sigil
 
+# Line comments start with #
+%ignore "#[^\n]*\n"
+# Multiline comments are surrounded by ##
+%ignore "##((?!##)(.|\n))*?##"
+
 # The starting rule, must be first
-program = definitions { return $0; };
-definitions
-    = definition { return $0; }
-    | definition definitions
+program = top_level_defs { return $0; };
+top_level_defs
+    = top_level_def { return $0; }
+    | top_level_def top_level_defs
     {
         $0->next = $1;
         return $0;
@@ -29,17 +34,37 @@ COMMA = ",";
 COLON = ":";
 
 # Operators
-OP_EQUALS = "=";
+OP_INC = "\+\+";
+OP_DEC = "--";
+
+OP_ASSIGN = "=";
 OP_PLUS = "\+";
+OP_ADD_ASSIGN = "\+=";
 OP_MINUS = "-";
+OP_SUB_ASSIGN = "-=";
 OP_STAR = "\*";
+OP_MUL_ASSIGN = "\*=";
 OP_SLASH = "/";
+OP_DIV_ASSIGN = "/=";
+OP_MOD = "%";
+OP_MOD_ASSIGN = "%=";
 OP_POW = "\*\*";
 OP_DOT = '\.';
 OP_LTEQ = "<=";
 OP_GTEQ = ">=";
+OP_EQ = "==";
+OP_NEQ = "!=";
 OP_LT = "<";
 OP_GT = ">";
+
+OP_BIT_AND = "&";
+OP_AND_ASSIGN = "&=";
+OP_BIT_OR = "\|";
+OP_OR_ASSIGN = "\|=";
+OP_BIT_XOR = "\^";
+OP_XOR_ASSIGN = "\^=";
+OP_BIT_NOT = "~";
+OP_NOT_ASSIGN = "~=";
 
 # Keywords
 KW_DO = "do";
@@ -47,6 +72,8 @@ KW_ELSE = "else";
 KW_FOR = "for";
 KW_IN = "in";
 KW_IF = "if";
+KW_AND = "and";
+KW_OR = "or";
 KW_NOT = "not";
 KW_RETURN = "return";
 KW_TO = "to";
@@ -55,10 +82,18 @@ KW_ABSTRACT = "abstract";
 KW_STATIC = "static";
 KW_ENUM = "enum";
 KW_CLASS = "class";
+KW_INIT = "init";
+KW_DELETE = "delete";
+KW_THROW = "throw";
+KW_TRY = "try";
+KW_CATCH = "catch";
+KW_NULL = 'null';
+KW_TRUE = "true";
+KW_FALSE = "false";
 
 # Literals
-LIT_INT = '[1-9]\d*';
-LIT_FLOAT = "\d+.\d+"; # TODO scientific notation?
+LIT_INT = '[0-9]+';
+LIT_FLOAT = "[0-9]+\.[0-9]+"; # TODO scientific notation?
 
 DOUBLE_QUOTE_STR = '"([^"]|(\\"))*"';
 SINGLE_QUOTE_STR = "'([^']|(\\'))*'";
@@ -113,12 +148,10 @@ literal
         return make_shared<ExprNode>(val);
     }
     | lit_set { return $0; }
-    | lit_string
-    {
-        return $0;
-    }
+    | lit_string { return $0; }
     | lit_list { return $0; }
     | lit_map { return $0; }
+    | KW_NULL { return make_shared<ExprNode>(ExprType::LitNull, ""); }
     ;
 
 # type names
@@ -129,56 +162,19 @@ TYPE_SET = "set";
 TYPE_STR = "str";
 TYPE_INT = "int";
 TYPE_FLOAT = "float";
+TYPE_BOOL = "bool";
 
 type
-    = TYPE_ARRAY OP_LT type OP_GT
-    {
-        return make_shared<DataTypeNode>(
-            PrimitiveType::Array, $type
-        );
-    }
-    | TYPE_LIST OP_LT type OP_GT
-    {
-        return make_shared<DataTypeNode>(
-            PrimitiveType::List, $type
-        );
-    }
-    | TYPE_MAP OP_LT type COMMA type OP_GT
-    {
-        return make_shared<DataTypeNode>(
-            PrimitiveType::Map, $2, $4
-        );
-    }
-    | TYPE_SET OP_LT type OP_GT
-    {
-        return make_shared<DataTypeNode>(
-            PrimitiveType::Set, $type
-        );
-    }
-    | TYPE_STR
-    {
-        return make_shared<DataTypeNode>(
-            PrimitiveType::Str
-        );
-    }
-    | TYPE_INT
-    {
-        return make_shared<DataTypeNode>(
-            PrimitiveType::Int
-        );
-    }
-    | TYPE_FLOAT
-    {
-        return make_shared<DataTypeNode>(
-            PrimitiveType::Float
-        );
-    }
-    | NAME
-    {
-        return make_shared<DataTypeNode>(
-            $0
-        );
-    }
+    = TYPE_ARRAY OP_LT type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Array, $type); }
+    | TYPE_LIST OP_LT type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::List, $type); }
+    | TYPE_MAP OP_LT type COMMA type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Map, $2, $4); }
+    | TYPE_SET OP_LT type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Set, $type); }
+    | TYPE_STR { return make_shared<DataTypeNode>(PrimitiveType::Str); }
+    | TYPE_INT { return make_shared<DataTypeNode>(PrimitiveType::Int); }
+    | TYPE_FLOAT { return make_shared<DataTypeNode>(PrimitiveType::Float); }
+    | TYPE_BOOL { return make_shared<DataTypeNode>(PrimitiveType::Bool); }
+    | KW_NULL { return make_shared<DataTypeNode>(PrimitiveType::Null); }
+    | NAME { return make_shared<DataTypeNode>($0); }
     ;
 
 # Access modifiers
@@ -204,7 +200,7 @@ name
     }
     ;
 
-definition
+top_level_def
     = func_definition { return $0; }
     | class_definition { return $0; }
     | enum_definition { return $0; }
@@ -220,6 +216,29 @@ var_definition
         auto out = make_shared<DefNode>(DefType::Var, $type, $NAME);
         out->accessMod = accessModNode->accessMod;
         out->specialMod = specialModNode->specialMod;
+
+        return out;
+    }
+    | access_modifier special_mod type NAME OP_ASSIGN expression SEMICOLON
+    {
+        auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
+        auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
+        auto out = make_shared<DefNode>(DefType::Var, $type, $NAME);
+        out->accessMod = accessModNode->accessMod;
+        out->specialMod = specialModNode->specialMod;
+        out->body = $expression;
+
+        return out;
+    }
+    | access_modifier special_mod NAME OP_ASSIGN expression SEMICOLON # infer the type
+    {
+        auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
+        auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
+        auto type = make_shared<DataTypeNode>(PrimitiveType::Unknown);
+        auto out = make_shared<DefNode>(DefType::Var, type, $NAME);
+        out->accessMod = accessModNode->accessMod;
+        out->specialMod = specialModNode->specialMod;
+        out->body = $expression;
 
         return out;
     }
@@ -244,9 +263,33 @@ func_definition
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
 
-        auto out = make_shared<DefNode>(DefType::Var, datatypeNode, $NAME);
+        auto out = make_shared<DefNode>(DefType::Func, datatypeNode, $NAME);
         out->accessMod = accessModNode->accessMod;
         out->specialMod = specialModNode->specialMod;
+        out->body = $body;
+
+        return out;
+    }
+    # Constructors
+    | access_modifier KW_INIT NAME OPEN_PAREN func_arg_definitions CLOSE_PAREN body
+    {
+        auto datatypeNode = make_shared<DataTypeNode>(PrimitiveType::Func, nullptr, $func_arg_definitions);
+        auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
+
+        auto out = make_shared<DefNode>(DefType::Init, datatypeNode, $NAME);
+        out->accessMod = accessModNode->accessMod;
+        out->body = $body;
+
+        return out;
+    }
+    # Deconstructor
+    | access_modifier KW_DELETE NAME OPEN_PAREN func_arg_definitions CLOSE_PAREN body
+    {
+        auto datatypeNode = make_shared<DataTypeNode>(PrimitiveType::Func, nullptr, $func_arg_definitions);
+        auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
+
+        auto out = make_shared<DefNode>(DefType::Delete, datatypeNode, $NAME);
+        out->accessMod = accessModNode->accessMod;
         out->body = $body;
 
         return out;
@@ -269,7 +312,7 @@ func_arg_def_list
 
 func_arg_def
     # TODO is expression the right thing here? The value should be evaluatable at compile time
-    = type NAME OP_EQUALS expression
+    = type NAME OP_ASSIGN expression
     {
         auto out = make_shared<DefNode>(DefType::Var, $type, $NAME);
         out->body = $expression;
@@ -297,12 +340,14 @@ statement
     | while_statement { return $0; }
     | do_while_statement { return $0; }
     | for_statement { return $0; }
+    | try_catch_statement { return $0; }
     ;
 
 statement_body
     = assignment { return $0; }
     | return_statement { return $0; }
     | expression { return $0; }
+    | throw_statement { return $0; }
     ;
 
 # If statements
@@ -377,23 +422,35 @@ return_statement
     };
 
 assignment
-    = name OP_EQUALS assign_expr
+    = bottom_val assign_op assign_expr
     {
-        auto out = make_shared<StmtNode>(StmtType::Assign);
-        out->update = $name;
+        auto out = static_pointer_cast<StmtNode>($assign_op);
+        out->update = $bottom_val;
         out->body = $assign_expr;
 
         return out;
     }
-    | type name OP_EQUALS assign_expr
+    | type name assign_op assign_expr
     {
-        auto out = make_shared<StmtNode>(StmtType::Assign);
+        auto out = static_pointer_cast<StmtNode>($assign_op);
         out->decl = $type;
         out->update = $name;
         out->body = $assign_expr;
 
         return out;
     }
+    ;
+
+assign_op
+    = OP_ASSIGN { return make_shared<StmtNode>(StmtType::Assign); }
+    | OP_ADD_ASSIGN { return make_shared<StmtNode>(StmtType::AssignAdd); }
+    | OP_SUB_ASSIGN { return make_shared<StmtNode>(StmtType::AssignSub); }
+    | OP_MUL_ASSIGN { return make_shared<StmtNode>(StmtType::AssignMul); }
+    | OP_DIV_ASSIGN { return make_shared<StmtNode>(StmtType::AssignDiv); }
+    | OP_MOD_ASSIGN { return make_shared<StmtNode>(StmtType::AssignMod); }
+    | OP_AND_ASSIGN { return make_shared<StmtNode>(StmtType::AssignAnd); }
+    | OP_OR_ASSIGN { return make_shared<StmtNode>(StmtType::AssignOr); }
+    | OP_XOR_ASSIGN { return make_shared<StmtNode>(StmtType::AssignXOr); }
     ;
 
 assign_expr
@@ -412,17 +469,103 @@ assign_expr
     }
     ;
 
+throw_statement
+    = KW_THROW expression
+    {
+        auto out = make_shared<StmtNode>(StmtType::Throw);
+        out->body = $expression;
+        return out;
+    }
+    ;
+
+try_catch_statement
+    = KW_TRY body catch_statements
+    {
+        auto out = make_shared<StmtNode>(StmtType::Try);
+        out->body = $body;
+        out->elseStmt = $catch_statements;
+        return out;
+    }
+    ;
+
+catch_statements
+    = catch_statement catch_statements
+    {
+        $0->next = $1;
+        return $0;
+    }
+    | catch_statement
+    {
+        return $0;
+    }
+    ;
+
+catch_statement
+    = KW_CATCH type name body
+    {
+        auto out = make_shared<StmtNode>(StmtType::Catch);
+        out->check = $type;
+        out->update = $name;
+        out->body = $body;
+
+        return out;
+    }
+    ;
+
 # Expression, defines the order of operations
+
 expression
-    = expression OP_PLUS term { return make_shared<ExprNode>(ExprType::Add, $0, $2); }
-    | expression OP_MINUS term { return make_shared<ExprNode>(ExprType::Sub, $0, $2); }
+    = expression KW_OR log_and_expr { return make_shared<ExprNode>(ExprType::LogOr, $0, $2); }
+    | log_and_expr { return $0; }
+    ;
+
+log_and_expr
+    = log_and_expr KW_AND bit_or_expr { return make_shared<ExprNode>(ExprType::LogAnd, $0, $2); }
+    | bit_or_expr { return $0; }
+    ;
+
+bit_or_expr
+    = bit_or_expr OP_BIT_OR bit_xor_expr { return make_shared<ExprNode>(ExprType::BitOr, $0, $2); }
+    | bit_xor_expr { return $0; }
+    ;
+
+bit_xor_expr
+    = bit_xor_expr OP_BIT_XOR bit_and_expr { return make_shared<ExprNode>(ExprType::BitXOr, $0, $2); }
+    | bit_and_expr { return $0; }
+    ;
+
+bit_and_expr
+    = bit_and_expr OP_BIT_AND equ_expr { return make_shared<ExprNode>(ExprType::BitAnd, $0, $2); }
+    | equ_expr { return $0; }
+    ;
+
+equ_expr
+    = equ_expr OP_EQ comp_expr { return make_shared<ExprNode>(ExprType::CompEQ, $0, $2); }
+    | equ_expr OP_NEQ comp_expr { return make_shared<ExprNode>(ExprType::CompNEQ, $0, $2); }
+    | comp_expr { return $0; }
+    ;
+
+comp_expr
+    = comp_expr OP_LT math_expr { return make_shared<ExprNode>(ExprType::CompLT, $0, $2); }
+    | comp_expr OP_LTEQ math_expr { return make_shared<ExprNode>(ExprType::CompLTEQ, $0, $2); }
+    | comp_expr OP_GT math_expr { return make_shared<ExprNode>(ExprType::CompGT, $0, $2); }
+    | comp_expr OP_GTEQ math_expr { return make_shared<ExprNode>(ExprType::CompGTEQ, $0, $2); }
+    | math_expr { return $0; }
+    ;
+
+math_expr
+    = math_expr OP_PLUS term { return make_shared<ExprNode>(ExprType::Add, $0, $2); }
+    | math_expr OP_MINUS term { return make_shared<ExprNode>(ExprType::Sub, $0, $2); }
     | term { return $0; }
     ;
+
 term
     = term OP_STAR factor { return make_shared<ExprNode>(ExprType::Mul, $0, $2); }
     | term OP_SLASH factor { return make_shared<ExprNode>(ExprType::Div, $0, $2); }
+    | term OP_MOD factor { return make_shared<ExprNode>(ExprType::Mod, $0, $2); }
     | factor { return $0; }
     ;
+
 factor
     = factor OP_POW pow_term { return make_shared<ExprNode>(ExprType::Pow, $0, $2); }
     | pow_term { return $0; }
@@ -430,11 +573,19 @@ factor
 
 pow_term
     # Negation
-    = OP_MINUS pow_term { return make_shared<ExprNode>(ExprType::Neg, $1, nullptr); }
+    = OP_MINUS inc_term { return make_shared<ExprNode>(ExprType::Neg, $1, nullptr); }
     # Binary negation
-    | KW_NOT pow_term { return make_shared<ExprNode>(ExprType::Not, $1, nullptr); }
+    | KW_NOT inc_term { return make_shared<ExprNode>(ExprType::Not, $1, nullptr); }
     # Parentheses
-    | OPEN_PAREN expression CLOSE_PAREN { return $1; }
+    | inc_term { return $0; }
+    ;
+
+inc_term
+    # Inc/Dec
+    = OP_INC bottom_val { return make_shared<ExprNode>(ExprType::PreInc, $1, nullptr); }
+    | bottom_val OP_INC { return make_shared<ExprNode>(ExprType::PostInc, $0, nullptr); }
+    | OP_DEC bottom_val { return make_shared<ExprNode>(ExprType::PreDec, $1, nullptr); }
+    | bottom_val OP_DEC { return make_shared<ExprNode>(ExprType::PostDec, $0, nullptr); }
     | bottom_val { return $0; }
     ;
 
@@ -464,6 +615,8 @@ bottom_val
     # Literals
     | literal { return $0; }
     | name { return $0; }
+    # parenthesis
+    | OPEN_PAREN expression CLOSE_PAREN { return $1; }
     ;
 
 comprehension
@@ -622,7 +775,7 @@ enum_statement
     {
         return make_shared<ExprNode>(ExprType::LitInt, $NAME);
     }
-    | NAME OP_EQUALS LIT_INT SEMICOLON
+    | NAME OP_ASSIGN LIT_INT SEMICOLON
     {
         auto out = make_shared<ExprNode>(ExprType::LitInt, $NAME);
         out->int_val = std::stoi($LIT_INT);

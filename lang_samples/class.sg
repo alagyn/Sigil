@@ -32,7 +32,7 @@ class Vehicle
         string name;
     }
     
-    public Vehicle(string name, int gasMax, float mpg)
+    public init Vehicle(string name, int gasMax, float mpg)
     {
         ##
         This is a multiline comment
@@ -50,7 +50,7 @@ class Vehicle
     
     public int refill(int amount)
     {
-        unfilled = gasMax - gasRemaining
+        unfilled = gasMax - gasRemaining;
         
         if amount <= unfilled
         {
@@ -82,7 +82,7 @@ class Vehicle
 
 }
 
-void main(list[string] args)
+int main(list<string> args)
 {
     c1 = Vehicle("Jimothy", 10, 2);
     
@@ -92,4 +92,5 @@ void main(list[string] args)
     
     print("MPG: ");
     
+    return 0;
 }

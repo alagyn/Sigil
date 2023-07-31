@@ -15,31 +15,23 @@
             ]
         },
         {
-            "name": "Gen Table",
-            "type": "python",
+            "name": "ast-browser",
+            "type": "cppdbg",
             "request": "launch",
-            "cwd": "${workspaceFolder}/ParseTableGen",
-            "module": "parse_table_gen.main",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceRoot}/build/sigil/ast-browser/ast-browser",
             "args": [
-                "tests/test_descr/G10.sebnf",
-                "temp.h"
+                "test_files/test.sg"
             ],
-            "justMyCode": true
-        },
-        {
-            "name": "Test Python",
-            "type": "python",
-            "request": "launch",
-            "cwd": "${workspaceFolder}/ParseTableGen",
-            "module": "unittest",
-            "args": [
-                "discover",
-                "-s",
-                "./tests",
-                "-p",
-                "test_*.py"
-            ],
-            "justMyCode": true
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
         }
     ]
 }

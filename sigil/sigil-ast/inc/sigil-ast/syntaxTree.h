@@ -16,6 +16,8 @@ enum class ASTNodeType
     Definition
 };
 
+const char* const astNodeTypeName(ASTNodeType);
+
 class ASTNode;
 using ASTNodePtr = std::shared_ptr<ASTNode>;
 
@@ -25,6 +27,7 @@ public:
     ASTNode(ASTNodeType nodeType);
 
     const ASTNodeType nodeType;
+    const unsigned nodeID;
     ASTNodePtr next;
 };
 
@@ -33,6 +36,7 @@ enum class ExprType
     Error,
     Add,
     Sub,
+    Mod,
     Mul,
     Div,
     Pow,
@@ -40,6 +44,28 @@ enum class ExprType
     Neg,
     Name,
 
+    PreInc,
+    PostInc,
+    PreDec,
+    PostDec,
+
+    CompLT,
+    CompLTEQ,
+    CompGT,
+    CompGTEQ,
+    CompEQ,
+    CompNEQ,
+
+    LogAnd,
+    LogOr,
+    LogNot,
+
+    BitAnd,
+    BitOr,
+    BitXOr,
+    BitNot,
+
+    LitNull,
     LitInt,
     LitFloat,
     LitStr,
@@ -55,6 +81,8 @@ enum class ExprType
     Dot,
     Subscript
 };
+
+const char* const exprTypeName(ExprType);
 
 class ExprNode : public ASTNode
 {
@@ -75,11 +103,15 @@ public:
     std::string str_val;
 };
 
+using ExprNodePtr = std::shared_ptr<ExprNode>;
+
 enum class PrimitiveType
 {
     Error,
+    Null,
     // Used when we get a user defined type
     Unknown,
+    Bool,
     Int,
     Float,
     Str,
@@ -91,6 +123,8 @@ enum class PrimitiveType
     Class,
     Enum
 };
+
+const char* const primitiveTypeName(PrimitiveType);
 
 class DataTypeNode : public ASTNode
 {
@@ -110,6 +144,8 @@ public:
     std::string name;
 };
 
+using DataTypeNodePtr = std::shared_ptr<DataTypeNode>;
+
 enum class AccessMod
 {
     Default,
@@ -118,6 +154,8 @@ enum class AccessMod
     Readonly,
     Shared
 };
+
+const char* const accessModName(AccessMod);
 
 class AccessModNode : public ASTNode
 {
@@ -129,14 +167,31 @@ public:
 
 enum class StmtType
 {
+    Error,
+
     Assign,
+    AssignAdd,
+    AssignSub,
+    AssignMul,
+    AssignDiv,
+    AssignMod,
+
+    AssignAnd,
+    AssignOr,
+    AssignXOr,
+
     If,
     ForIn,
     ForTo,
     While,
     DoWhile,
-    Return
+    Return,
+    Throw,
+    Try,
+    Catch
 };
+
+const char* const stmtTypeName(StmtType);
 
 class StmtNode : public ASTNode
 {
@@ -146,15 +201,18 @@ public:
     StmtType stmtType;
     // Declarations for "for" and "while" loops, and types for assignment
     ASTNodePtr decl;
-    // Expressions for "for" and "while" continuation, and "if" checks
+    // Expressions for "for" and "while" continuation, and "if" checks,
+    // datatypes for catches
     ASTNodePtr check;
-    // Second expression in "ForTo", and names for assignments
+    // Second expression in "ForTo", and names for assignments and catch vars
     ASTNodePtr update;
-    // Code body
+    // Code body, main code for trys
     ASTNodePtr body;
-    // else statements, and elses for ternary
+    // else statements, and elses for ternary, and catch for trys
     ASTNodePtr elseStmt;
 };
+
+using StmtNodePtr = std::shared_ptr<StmtNode>;
 
 enum class SpecialMod
 {
@@ -162,6 +220,8 @@ enum class SpecialMod
     Abstract,
     Static
 };
+
+const char* const specialModName(SpecialMod);
 
 class SpecialModNode : public ASTNode
 {
@@ -182,10 +242,15 @@ enum class DefType
     // Funcs use the parent type for the special mod type
     // And body as the arg definitions
     Func,
+    // Contructor
+    Init,
+    Delete,
 
     Class,
     Enum
 };
+
+const char* const defTypeName(DefType);
 
 class DefNode : public ASTNode
 {
@@ -200,5 +265,7 @@ public:
     SpecialMod specialMod;
     ASTNodePtr body;
 };
+
+using DefNodePtr = std::shared_ptr<DefNode>;
 
 } //namespace sigil

@@ -8,7 +8,7 @@
 #include <hermes/parser.h>
 #include <hermes/scanner.h>
 
-#include <sigil/syntaxTree.h>
+#include <sigil-ast/syntaxTree.h>
 
 using namespace std;
 
