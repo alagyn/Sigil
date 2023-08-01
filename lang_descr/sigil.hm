@@ -97,6 +97,11 @@ LIT_FLOAT = "[0-9]+\.[0-9]+"; # TODO scientific notation?
 
 DOUBLE_QUOTE_STR = '"([^"]|(\\"))*"';
 SINGLE_QUOTE_STR = "'([^']|(\\'))*'";
+lit_bool
+    = KW_TRUE { return make_shared<ExprNode>(ExprType::LitTrue); }
+    | KW_FALSE { return make_shared<ExprNode>(ExprType::LitFalse); }
+    ;
+
 lit_string
     = DOUBLE_QUOTE_STR { return make_shared<ExprNode>($0); }
     | SINGLE_QUOTE_STR { return make_shared<ExprNode>($0); }
@@ -151,7 +156,8 @@ literal
     | lit_string { return $0; }
     | lit_list { return $0; }
     | lit_map { return $0; }
-    | KW_NULL { return make_shared<ExprNode>(ExprType::LitNull, ""); }
+    | lit_bool { return $0; }
+    | KW_NULL { return make_shared<ExprNode>(ExprType::LitNull); }
     ;
 
 # type names

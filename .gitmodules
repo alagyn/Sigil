@@ -7,3 +7,6 @@
 [submodule "deps/glfw"]
 	path = deps/glfw
 	url = git@github.com:glfw/glfw.git
+[submodule "deps/imnodes"]
+	path = deps/imnodes
+	url = git@github.com:Nelarius/imnodes.git

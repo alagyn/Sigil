@@ -82,5 +82,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    sigil::run(tree);
+    sigil::ASTGraphBrowser app(tree);
+
+    app.run();
 }

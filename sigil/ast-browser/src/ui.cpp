@@ -1,15 +1,20 @@
 #include <ast-browser/ui.h>
 
+#include <imgui.h>
+
+#include <imnodes.h>
+
 #include <GLFW/glfw3.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
-#include <imgui.h>
-
 #include <iostream>
+#include <map>
 #include <sstream>
 
 #include <sigil-ast/syntaxTree.h>
+
+using namespace std;
 
 namespace sigil {
 
@@ -18,11 +23,23 @@ void GLFWErrCallback(int err, const char* msg)
     std::cout << "GLFW Error, code: " << err << " Msg: " << msg << "\n";
 }
 
-// Forward decl
-void recurseRenderTree(ASTNodePtr tree);
+void maybeAttr(int portID, ASTNodePtr node, const char* label)
+{
+    if(node)
+    {
+        ImNodes::BeginOutputAttribute(portID);
+        ImGui::Text(label);
+        ImNodes::EndOutputAttribute();
+    }
+}
 
-constexpr ImGuiTableFlags tableFlags =
-    ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInnerV;
+void maybeLink(int portID, ASTNodePtr node)
+{
+    if(node)
+    {
+        ImNodes::Link(portID, portID, node->nodeID);
+    }
+}
 
 void tableEntry(const char* label, const std::string& value)
 {
@@ -41,158 +58,348 @@ void tableEntry(const char* label, const char* fmt, Args... args)
     ImGui::Text(fmt, args...);
 }
 
-void maybeRender(const std::string& label, const ASTNodePtr node)
+constexpr ImGuiTableFlags TABLE_FLAGS = ImGuiTableFlags_SizingFixedFit
+                                        | ImGuiTableFlags_Resizable
+                                        | ImGuiTableFlags_BordersInnerV;
+
+void NodeWrap::_render()
 {
-    if(node)
+    ImNodes::SetNodeGridSpacePos(base->nodeID, pos);
+    ImNodes::BeginNode(base->nodeID);
+    ImNodes::BeginNodeTitleBar();
+    ImGui::Text(astNodeTypeName(base->nodeType));
+    ImNodes::EndNodeTitleBar();
+
+    ImNodes::BeginInputAttribute(base->nodeID);
+    ImGui::Dummy(ImVec2(5, 5));
+    ImNodes::EndInputAttribute();
+
+    render();
+
+    maybeAttr(nextId, base->next, "Next");
+
+    ImNodes::EndNode();
+
+    links();
+
+    maybeLink(nextId, base->next);
+}
+
+class TempNodeWrap : public NodeWrap
+{
+public:
+    ASTNodePtr node;
+
+    TempNodeWrap(ASTNodePtr node, int& idGen)
+        : NodeWrap(node, idGen)
+        , node(node)
     {
-        if(ImGui::TreeNode(label.c_str()))
+    }
+
+protected:
+    void render() override
+    {
+    }
+
+    void links() override
+    {
+    }
+};
+
+class DefNodeWrap : public NodeWrap
+
+{
+public:
+    DefNodePtr node;
+
+    int bodyPort;
+    int dtPort;
+
+    DefNodeWrap(DefNodePtr node, int& portIdGen)
+        : NodeWrap(node, portIdGen)
+        , node(node)
+        , bodyPort(--portIdGen)
+        , dtPort(--portIdGen)
+    {
+    }
+
+protected:
+    void render() override
+    {
+        if(ImGui::BeginTable("def", 2, TABLE_FLAGS))
         {
-            recurseRenderTree(node);
-            ImGui::TreePop();
+            tableEntry("Type", defTypeName(node->defType));
+            tableEntry("Name", node->name);
+            tableEntry("Special", specialModName(node->specialMod));
+            tableEntry("Access", accessModName(node->accessMod));
+
+            ImGui::EndTable();
+        }
+
+        maybeAttr(dtPort, node->dataType, "Data Type");
+        maybeAttr(bodyPort, node->body, "Body");
+    }
+
+    void links() override
+    {
+        maybeLink(dtPort, node->dataType);
+        maybeLink(bodyPort, node->body);
+    }
+};
+
+class DataTypeNodeWrap : public NodeWrap
+{
+public:
+    DataTypeNodePtr node;
+
+    int sub1Port, sub2Port;
+
+    DataTypeNodeWrap(DataTypeNodePtr node, int& idGen)
+        : NodeWrap(node, idGen)
+        , node(node)
+        , sub1Port(--idGen)
+        , sub2Port(--idGen)
+    {
+    }
+
+protected:
+    void render() override
+    {
+        if(ImGui::BeginTable("datatype", 2, TABLE_FLAGS))
+        {
+            tableEntry("Name", node->name);
+            tableEntry("Type", primitiveTypeName(node->type));
+
+            ImGui::EndTable();
+        }
+
+        maybeAttr(sub1Port, node->subtype1, "SubType 1");
+        maybeAttr(sub2Port, node->subtype2, "SubType 2");
+    }
+
+    void links() override
+    {
+        maybeLink(sub1Port, node->subtype1);
+        maybeLink(sub2Port, node->subtype2);
+    }
+};
+
+class StmtNodeWrap : public NodeWrap
+{
+public:
+    StmtNodePtr node;
+    int decl, check, update, body, else_;
+
+    StmtNodeWrap(StmtNodePtr node, int& idGen)
+        : NodeWrap(node, idGen)
+        , node(node)
+        , decl(--idGen)
+        , check(--idGen)
+        , update(--idGen)
+        , body(--idGen)
+        , else_(--idGen)
+    {
+    }
+
+protected:
+    void render() override
+    {
+        if(ImGui::BeginTable("stmt", 2, TABLE_FLAGS))
+        {
+            tableEntry("Type", stmtTypeName(node->stmtType));
+
+            ImGui::EndTable();
+
+            maybeAttr(decl, node->decl, "Decl");
+            maybeAttr(check, node->check, "Check");
+            maybeAttr(update, node->update, "Update");
+            maybeAttr(body, node->body, "Body");
+            maybeAttr(else_, node->elseStmt, "Else");
         }
     }
-}
 
-void renderDef(DefNodePtr defNode)
-{
-    if(ImGui::BeginTable("def", 2, tableFlags))
+    void links() override
     {
-        tableEntry("Type", defTypeName(defNode->defType));
-        tableEntry("Name", defNode->name);
-        tableEntry("Special", specialModName(defNode->specialMod));
-        tableEntry("Access", accessModName(defNode->accessMod));
-
-        ImGui::EndTable();
-
-        recurseRenderTree(defNode->dataType);
-        recurseRenderTree(defNode->body);
+        maybeLink(decl, node->decl);
+        maybeLink(check, node->check);
+        maybeLink(update, node->update);
+        maybeLink(body, node->body);
+        maybeLink(else_, node->elseStmt);
     }
-}
+};
 
-void renderDatatype(DataTypeNodePtr datatype)
+class ExprNodeWrap : public NodeWrap
 {
-    if(ImGui::BeginTable("datatype", 2, tableFlags))
+public:
+    ExprNodePtr node;
+    int left, right;
+
+    ExprNodeWrap(ExprNodePtr node, int& idGen)
+        : NodeWrap(node, idGen)
+        , node(node)
+        , left(--idGen)
+        , right(--idGen)
     {
-        tableEntry("Name", datatype->name);
-        tableEntry("Type", primitiveTypeName(datatype->type));
-
-        ImGui::EndTable();
-
-        maybeRender("SubType 1", datatype->subtype1);
-        maybeRender("SubType 2", datatype->subtype2);
     }
-}
 
-void renderStatement(StmtNodePtr stmt)
-{
-    if(ImGui::BeginTable("stmt", 2, tableFlags))
+protected:
+    void render() override
     {
-        tableEntry("Type", stmtTypeName(stmt->stmtType));
-
-        ImGui::EndTable();
-
-        maybeRender("Decl", stmt->decl);
-        maybeRender("Check", stmt->check);
-        maybeRender("Update", stmt->update);
-        maybeRender("Body", stmt->body);
-        maybeRender("Else", stmt->elseStmt);
-    }
-}
-
-void renderExpr(ExprNodePtr expr)
-{
-    if(ImGui::BeginTable("expr", 2, tableFlags))
-    {
-        tableEntry("Type", exprTypeName(expr->type));
-        switch(expr->type)
+        if(ImGui::BeginTable("expr", 2, TABLE_FLAGS))
         {
-        case ExprType::LitInt:
+            tableEntry("Type", exprTypeName(node->type));
+            switch(node->type)
+            {
+            case ExprType::LitInt:
+            {
+                tableEntry("Int Val", "%d", node->int_val);
+                break;
+            }
+            case ExprType::LitFloat:
+            {
+                tableEntry("Float Val", "%3.4f", node->float_val);
+                break;
+            }
+            case ExprType::LitStr:
+            {
+                tableEntry("Str Val", "'%s'", node->str_val.c_str());
+                break;
+            }
+            case ExprType::Name:
+            {
+                tableEntry("Name", node->str_val);
+                break;
+            }
+            }
+
+            ImGui::EndTable();
+
+            maybeAttr(left, node->left, "Left");
+            maybeAttr(right, node->right, "Right");
+        }
+    }
+
+    void links() override
+    {
+        maybeLink(left, node->left);
+        maybeLink(right, node->right);
+    }
+};
+
+ASTGraphBrowser::ASTGraphBrowser(ASTNodePtr tree)
+    : tree(tree)
+    , portIdGen(-1)
+    , nodes()
+
+{
+    recurseLoadTree(tree, 0);
+}
+
+constexpr int HOR_OFF = 300;
+constexpr int VERT_OFF = 200;
+
+template<class T, class N>
+std::shared_ptr<T> ASTGraphBrowser::makeWrap(N node, int depth)
+{
+    auto out = make_shared<T>(node, portIdGen);
+    if(depthCounts.size() == depth)
+    {
+        depthCounts.push_back(0);
+    }
+
+    out->pos.x = depth * HOR_OFF;
+    out->pos.y = depthCounts[depth] * VERT_OFF;
+    ++depthCounts[depth];
+
+    return out;
+}
+
+void ASTGraphBrowser::recurseLoadTree(ASTNodePtr tree, int depth)
+{
+    int nextDepth = depth + 1;
+
+    if(tree)
+    {
+        std::cout << "D" << depth << " N" << tree->nodeID << " "
+                  << astNodeTypeName(tree->nodeType) << "\n";
+        switch(tree->nodeType)
         {
-            tableEntry("Int Val", "%d", expr->int_val);
+        case ASTNodeType::Definition:
+        {
+            auto x = static_pointer_cast<DefNode>(tree);
+            auto node = makeWrap<DefNodeWrap>(x, depth);
+            nodes.push_back(node);
+            recurseLoadTree(x->dataType, nextDepth);
+            recurseLoadTree(x->body, nextDepth);
+
             break;
         }
-        case ExprType::LitFloat:
+        case ASTNodeType::Datatype:
         {
-            tableEntry("Float Val", "%3.4f", expr->float_val);
+            auto x = static_pointer_cast<DataTypeNode>(tree);
+            auto node = makeWrap<DataTypeNodeWrap>(x, depth);
+            nodes.push_back(node);
+            recurseLoadTree(x->subtype1, nextDepth);
+            recurseLoadTree(x->subtype2, nextDepth);
             break;
         }
-        case ExprType::LitStr:
+        case ASTNodeType::Statement:
         {
-            tableEntry("Str Val", "'%s'", expr->str_val.c_str());
+            auto x = static_pointer_cast<StmtNode>(tree);
+            auto node = makeWrap<StmtNodeWrap>(x, depth);
+            nodes.push_back(node);
+            recurseLoadTree(x->decl, nextDepth);
+            recurseLoadTree(x->check, nextDepth);
+            recurseLoadTree(x->update, nextDepth);
+            recurseLoadTree(x->body, nextDepth);
+            recurseLoadTree(x->elseStmt, nextDepth);
             break;
         }
-        case ExprType::Name:
+        case ASTNodeType::Expr:
         {
-            tableEntry("Name", expr->str_val);
+            auto x = static_pointer_cast<ExprNode>(tree);
+            auto node = makeWrap<ExprNodeWrap>(x, depth);
+            nodes.push_back(node);
+            recurseLoadTree(x->left, nextDepth);
+            recurseLoadTree(x->right, nextDepth);
             break;
         }
+        default:
+            nodes.push_back(makeWrap<TempNodeWrap>(tree, depth));
+            break;
         }
 
-        ImGui::EndTable();
-
-        maybeRender("Left", expr->left);
-        maybeRender("Right", expr->right);
+        recurseLoadTree(tree->next, nextDepth);
     }
 }
 
-void recurseRenderTree(ASTNodePtr tree)
-{
-    while(tree)
-    {
-        if(ImGui::TreeNode(
-               tree.get(),
-               "%d: %s",
-               tree->nodeID,
-               astNodeTypeName(tree->nodeType)
-           ))
-        {
-            switch(tree->nodeType)
-            {
-            case ASTNodeType::Definition:
-            {
-                renderDef(std::static_pointer_cast<DefNode>(tree));
-                break;
-            }
-            case ASTNodeType::Datatype:
-            {
-                renderDatatype(std::static_pointer_cast<DataTypeNode>(tree));
-                break;
-            }
-            case ASTNodeType::Statement:
-            {
-                renderStatement(std::static_pointer_cast<StmtNode>(tree));
-                break;
-            }
-            case ASTNodeType::Expr:
-            {
-                renderExpr(std::static_pointer_cast<ExprNode>(tree));
-                break;
-            }
-            default:
-                break;
-            }
+constexpr ImGuiWindowFlags windowFlags =
+    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 
-            ImGui::TreePop();
+void ASTGraphBrowser::render()
+{
+    auto io = ImGui::GetIO();
+
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(io.DisplaySize));
+    if(ImGui::Begin("AST-Tree", nullptr, windowFlags))
+    {
+        ImNodes::BeginNodeEditor();
+        ImNodes::MiniMap();
+
+        for(auto node : nodes)
+        {
+            node->_render();
         }
 
-        //recurseRenderTree(tree);
-
-        tree = tree->next;
-    }
-}
-
-void render(ASTNodePtr tree)
-{
-    if(ImGui::Begin("AST-Tree"))
-    {
-        recurseRenderTree(tree);
+        ImNodes::EndNodeEditor();
     }
     ImGui::End();
 }
 
 const ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-int run(ASTNodePtr tree)
+int ASTGraphBrowser::run()
 {
     glfwSetErrorCallback(GLFWErrCallback);
     if(!glfwInit())
@@ -221,6 +428,7 @@ int run(ASTNodePtr tree)
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImNodes::CreateContext();
     ImGui::StyleColorsDark();
 
     if(!ImGui_ImplGlfw_InitForOpenGL(window, true))
@@ -237,6 +445,8 @@ int run(ASTNodePtr tree)
 
     glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 
+    ImNodes::GetIO().EmulateThreeButtonMouse.Modifier = &ImGui::GetIO().KeyAlt;
+
     while(true)
     {
         glfwPollEvents();
@@ -245,7 +455,7 @@ int run(ASTNodePtr tree)
         ImGui::NewFrame();
 
         /////////////
-        render(tree);
+        render();
         /////////////
 
         ImGui::Render();
@@ -263,6 +473,9 @@ int run(ASTNodePtr tree)
             break;
         }
     }
+
+    ImNodes::DestroyContext();
+    ImGui::DestroyContext();
 
     glfwDestroyWindow(window);
     glfwTerminate();

@@ -22,6 +22,12 @@ ExprNode::ExprNode()
 {
 }
 
+ExprNode::ExprNode(ExprType type)
+    : ASTNode(ASTNodeType::Expr)
+    , type(type)
+{
+}
+
 ExprNode::ExprNode(ExprType type, ASTNodePtr left, ASTNodePtr right)
     : ASTNode(ASTNodeType::Expr)
     , type(type)
@@ -194,6 +200,10 @@ const char* const exprTypeName(ExprType type)
         return "BitXOr";
     case ExprType::LitNull:
         return "LitNull";
+    case ExprType::LitTrue:
+        return "LitTrue";
+    case ExprType::LitFalse:
+        return "LitFalse";
     case ExprType::LitInt:
         return "LitInt";
     case ExprType::LitFloat:

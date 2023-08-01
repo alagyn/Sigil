@@ -66,6 +66,8 @@ enum class ExprType
     BitNot,
 
     LitNull,
+    LitTrue,
+    LitFalse,
     LitInt,
     LitFloat,
     LitStr,
@@ -90,6 +92,7 @@ public:
     ExprNode();
     ExprNode(ExprType type, ASTNodePtr left, ASTNodePtr right);
     ExprNode(ExprType type, std::string name);
+    ExprNode(ExprType type);
     ExprNode(std::string str_val);
     explicit ExprNode(int int_val);
     explicit ExprNode(double float_val);
