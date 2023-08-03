@@ -65,6 +65,9 @@ enum class ExprType
     BitXOr,
     BitNot,
 
+    LShift,
+    RShift,
+
     LitNull,
     LitTrue,
     LitFalse,
@@ -75,13 +78,15 @@ enum class ExprType
     // These have left set to an expr list, right == nullptr
     LitList,
     LitSet,
+    LitTuple,
 
     // Left is key, right is val, next is next value
     LitMap,
 
     Call,
     Dot,
-    Subscript
+    Subscript,
+    KeyVal
 };
 
 const char* const exprTypeName(ExprType);
@@ -122,6 +127,7 @@ enum class PrimitiveType
     List,
     Map,
     Set,
+    Tuple,
     Func,
     Class,
     Enum
@@ -184,10 +190,21 @@ enum class StmtType
     AssignXOr,
 
     If,
+
+    // For X in list
     ForIn,
+    // For X in 0 to 20
     ForTo,
+    // For x = 0 while x < 10 then x += 2
+    // For x = 0 while x < 10
+    ForWhile,
+    // while x < 10
+
     While,
     DoWhile,
+
+    Comprehension,
+
     Return,
     Throw,
     Try,
@@ -202,15 +219,24 @@ public:
     StmtNode(StmtType stmtType);
 
     StmtType stmtType;
+
     // Declarations for "for" and "while" loops, and types for assignment
     ASTNodePtr decl;
-    // Expressions for "for" and "while" continuation, and "if" checks,
+
+    // iterable target for loops
+    ASTNodePtr iterable;
+
+    // clauses for "for" and "while" continuation, and "if" checks,
     // datatypes for catches
     ASTNodePtr check;
+
     // Second expression in "ForTo", and names for assignments and catch vars
+    // Update expression in "ForWhile"
     ASTNodePtr update;
+
     // Code body, main code for trys
     ASTNodePtr body;
+
     // else statements, and elses for ternary, and catch for trys
     ASTNodePtr elseStmt;
 };

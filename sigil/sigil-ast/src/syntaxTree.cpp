@@ -198,6 +198,10 @@ const char* const exprTypeName(ExprType type)
         return "BitNot";
     case ExprType::BitXOr:
         return "BitXOr";
+    case ExprType::LShift:
+        return "LShift";
+    case ExprType::RShift:
+        return "RShift";
     case ExprType::LitNull:
         return "LitNull";
     case ExprType::LitTrue:
@@ -214,6 +218,8 @@ const char* const exprTypeName(ExprType type)
         return "LitList";
     case ExprType::LitSet:
         return "LitSet";
+    case ExprType::LitTuple:
+        return "LitTuple";
     case ExprType::LitMap:
         return "LitMap";
     case ExprType::Call:
@@ -222,6 +228,8 @@ const char* const exprTypeName(ExprType type)
         return "Dot";
     case ExprType::Subscript:
         return "Subscript";
+    case ExprType::KeyVal:
+        return "KeyVal";
     }
 }
 
@@ -252,6 +260,8 @@ const char* const primitiveTypeName(PrimitiveType type)
         return "Map";
     case PrimitiveType::Set:
         return "Set";
+    case PrimitiveType::Tuple:
+        return "Tuple";
     case PrimitiveType::Func:
         return "Func";
     case PrimitiveType::Class:
@@ -310,10 +320,14 @@ const char* const stmtTypeName(StmtType type)
         return "ForIn";
     case StmtType::ForTo:
         return "ForTo";
+    case StmtType::ForWhile:
+        return "ForWhile";
     case StmtType::While:
         return "While";
     case StmtType::DoWhile:
         return "DoWhile";
+    case StmtType::Comprehension:
+        return "Comprehension";
     case StmtType::Return:
         return "Return";
     case StmtType::Throw:

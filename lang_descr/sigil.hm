@@ -22,6 +22,7 @@ top_level_defs
     }
     ;
 
+# region Terminals
 # Char declarations
 SEMICOLON = ";";
 OPEN_CURLY = "{";
@@ -56,6 +57,8 @@ OP_EQ = "==";
 OP_NEQ = "!=";
 OP_LT = "<";
 OP_GT = ">";
+OP_LSHIFT = "<<";
+OP_RSHIFT = ">>";
 
 OP_BIT_AND = "&";
 OP_AND_ASSIGN = "&=";
@@ -97,14 +100,31 @@ LIT_FLOAT = "[0-9]+\.[0-9]+"; # TODO scientific notation?
 
 DOUBLE_QUOTE_STR = '"([^"]|(\\"))*"';
 SINGLE_QUOTE_STR = "'([^']|(\\'))*'";
+
+# endregion
+
+# region Literals
+
+lit_string
+    = lit_string lit_string2
+    {
+        auto str1 = static_pointer_cast<ExprNode>($0);
+        auto str2 = static_pointer_cast<ExprNode>($1);
+        str1->str_val.append(str2->str_val);
+        return str1;
+    }
+    | lit_string2 { return $0; }
+    ;
+
+# Need this for recursion to not cause conflicts
+lit_string2
+    = DOUBLE_QUOTE_STR { return make_shared<ExprNode>($0); }
+    | SINGLE_QUOTE_STR { return make_shared<ExprNode>($0); }
+    ;
+
 lit_bool
     = KW_TRUE { return make_shared<ExprNode>(ExprType::LitTrue); }
     | KW_FALSE { return make_shared<ExprNode>(ExprType::LitFalse); }
-    ;
-
-lit_string
-    = DOUBLE_QUOTE_STR { return make_shared<ExprNode>($0); }
-    | SINGLE_QUOTE_STR { return make_shared<ExprNode>($0); }
     ;
 
 lit_list
@@ -113,11 +133,33 @@ lit_list
         return make_shared<ExprNode>(ExprType::LitList, $expr_list, nullptr);
     }
     ;
+
 lit_set
     = OPEN_CURLY expr_list CLOSE_CURLY
     {
         return make_shared<ExprNode>(ExprType::LitSet, $expr_list, nullptr);
-    };
+    }
+    ;
+
+lit_tuple
+    = OPEN_PAREN tuple_list CLOSE_PAREN
+    {
+        return make_shared<ExprNode>(ExprType::LitTuple, $tuple_list, nullptr);
+    }
+    ;
+
+tuple_list
+    = expression COMMA
+    {
+        return $0;
+    }
+    | expression COMMA tuple_list
+    {
+        $0->next = $2;
+        return $0;
+    }
+    ;
+
 lit_map
     = OPEN_CURLY map_list CLOSE_CURLY
     {
@@ -157,8 +199,13 @@ literal
     | lit_list { return $0; }
     | lit_map { return $0; }
     | lit_bool { return $0; }
+    | lit_tuple { return $0; }
     | KW_NULL { return make_shared<ExprNode>(ExprType::LitNull); }
     ;
+
+# endregion
+
+# region Types
 
 # type names
 TYPE_ARRAY = "array";
@@ -169,12 +216,14 @@ TYPE_STR = "str";
 TYPE_INT = "int";
 TYPE_FLOAT = "float";
 TYPE_BOOL = "bool";
+TYPE_TUPLE = "tuple";
 
 type
     = TYPE_ARRAY OP_LT type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Array, $type); }
     | TYPE_LIST OP_LT type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::List, $type); }
     | TYPE_MAP OP_LT type COMMA type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Map, $2, $4); }
     | TYPE_SET OP_LT type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Set, $type); }
+    | TYPE_TUPLE OP_LT type_list OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Tuple, $type_list); }
     | TYPE_STR { return make_shared<DataTypeNode>(PrimitiveType::Str); }
     | TYPE_INT { return make_shared<DataTypeNode>(PrimitiveType::Int); }
     | TYPE_FLOAT { return make_shared<DataTypeNode>(PrimitiveType::Float); }
@@ -182,6 +231,22 @@ type
     | KW_NULL { return make_shared<DataTypeNode>(PrimitiveType::Null); }
     | NAME { return make_shared<DataTypeNode>($0); }
     ;
+
+type_list
+    = type COMMA type_list 
+    {
+        $type->next = $type_list;
+        return $type;
+    }
+    | type
+    {
+        return $type;
+    }
+    ;
+
+# endregion
+
+# region Access Mods
 
 # Access modifiers
 ACC_PUBLIC = "public";
@@ -196,6 +261,8 @@ access_modifier
     | ACC_SHARED { return make_shared<AccessModNode>(AccessMod::Shared); }
     | EMPTY { return make_shared<AccessModNode>(AccessMod::Default); }
     ;
+
+# endregion
 
 # This goes after all the builtins
 NAME = "[a-zA-Z][a-zA-Z0-9_]*";
@@ -349,6 +416,17 @@ statement
     | try_catch_statement { return $0; }
     ;
 
+update_expr
+    = expression
+    {
+        return $0;
+    }
+    | assignment
+    {
+        return $0;
+    }
+    ;
+
 statement_body
     = assignment { return $0; }
     | return_statement { return $0; }
@@ -397,21 +475,33 @@ do_while_statement
 
 # For statements
 for_statement
-    = KW_FOR name KW_IN expression body
+    = KW_FOR name_list KW_IN expression if_clause body
     {
         auto out = make_shared<StmtNode>(StmtType::ForIn);
-        out->decl = $name;
-        out->check = $expression;
+        out->decl = $name_list;
+        out->iterable = $expression;
+        out->check = $if_clause;
+        out->body = $body;
+        return out;
+    }
+    | KW_FOR name_list KW_IN expression KW_TO expression if_clause body
+    {
+        auto out = make_shared<StmtNode>(StmtType::ForTo);
+        out->decl = $name_list;
+        out->iterable = $3;
+        out->check = $if_clause;
+        out->update = $5;
         out->body = $body;
 
         return out;
     }
-    | KW_FOR name KW_IN expression KW_TO expression body
+    | KW_FOR name_list KW_IN expression KW_WHILE expression KW_THEN update_expr body
     {
-        auto out = make_shared<StmtNode>(StmtType::ForTo);
-        out->decl = $name;
-        out->check = $3;
-        out->update = $5;
+        auto out = make_shared<StmtNode>(StmtType::ForWhile);
+        out->decl = $name_list;
+        out->iterable = $3;
+        out->check = $5;
+        out->update = $7;
         out->body = $body;
 
         return out;
@@ -518,8 +608,9 @@ catch_statement
     }
     ;
 
-# Expression, defines the order of operations
+# region Expression
 
+# Expression, defines the order of operations
 expression
     = expression KW_OR log_and_expr { return make_shared<ExprNode>(ExprType::LogOr, $0, $2); }
     | log_and_expr { return $0; }
@@ -552,10 +643,16 @@ equ_expr
     ;
 
 comp_expr
-    = comp_expr OP_LT math_expr { return make_shared<ExprNode>(ExprType::CompLT, $0, $2); }
-    | comp_expr OP_LTEQ math_expr { return make_shared<ExprNode>(ExprType::CompLTEQ, $0, $2); }
-    | comp_expr OP_GT math_expr { return make_shared<ExprNode>(ExprType::CompGT, $0, $2); }
-    | comp_expr OP_GTEQ math_expr { return make_shared<ExprNode>(ExprType::CompGTEQ, $0, $2); }
+    = comp_expr OP_LT shift_expr { return make_shared<ExprNode>(ExprType::CompLT, $0, $2); }
+    | comp_expr OP_LTEQ shift_expr { return make_shared<ExprNode>(ExprType::CompLTEQ, $0, $2); }
+    | comp_expr OP_GT shift_expr { return make_shared<ExprNode>(ExprType::CompGT, $0, $2); }
+    | comp_expr OP_GTEQ shift_expr { return make_shared<ExprNode>(ExprType::CompGTEQ, $0, $2); }
+    | shift_expr { return $0; }
+    ;
+
+shift_expr
+    = shift_expr OP_LSHIFT math_expr { return make_shared<ExprNode>(ExprType::LShift, $0, $2); }
+    | shift_expr OP_RSHIFT math_expr { return make_shared<ExprNode>(ExprType::RShift, $0, $2); }
     | math_expr { return $0; }
     ;
 
@@ -625,37 +722,70 @@ bottom_val
     | OPEN_PAREN expression CLOSE_PAREN { return $1; }
     ;
 
-comprehension
-    # List comprehension
-    = OPEN_SQUARE linear_comprehension CLOSE_SQUARE
+# endregion
+
+keyval_pair
+    = expression COLON expression
+    {
+        return make_shared<ExprNode>(ExprType::KeyVal, $0, $2);
+    }
+    ;
+
+
+name_list
+    = name
+    {
+        return $0;
+    }
+    | name name_list
+    {
+        $0->next = $1;
+        return $0;
+    }
+    ;
+
+for_if_clause
+    = KW_FOR name_list KW_IN expression if_clause
+    {
+        return make_shared<StmtNode>(StmtNode::ForIn,)
+    }
+    ;
+
+if_clause
+    = EMPTY
+    {
+        return nullptr;
+    }
+    | KW_IF expression else_clause
+    {
+
+    }
+    ;
+
+else_clause
+    = EMPTY
+    {
+        return nullptr;
+    }
+    | KW_ELSE expression
     {
         return $1;
     }
+    ;
+
+comprehension
+    # List comprehension
+    = OPEN_SQUARE expression for_if_clause CLOSE_SQUARE
+    {
+        return
+    }
     # Set comprehension
-    | OPEN_CURLY linear_comprehension CLOSE_CURLY
+    | OPEN_CURLY expression for_if_clause CLOSE_CURLY
     {
         return $1;
     }
     # Map comprehension
-    | OPEN_CURLY expression COLON expression KW_FOR name KW_IN expression CLOSE_CURLY
-    {
-        // TODO
-        return nullptr;
-    }
-    | OPEN_CURLY expression COLON expression KW_FOR name KW_IN expression KW_IF expression CLOSE_CURLY
-    {
-        // TODO
-        return nullptr;
-    }
-    ;
-
-linear_comprehension
-    = expression KW_FOR name KW_IN expression
-    {
-        // TODO
-        return nullptr;
-    }
-    | expression KW_FOR name KW_IN expression KW_IF expression
+    | OPEN_CURLY keyval_pair for_if_clause CLOSE_CURLY
     {
         // TODO
         return nullptr;
@@ -673,6 +803,8 @@ expr_list
         return $0;
     }
     ;
+
+# region Class stuff
 
 # Class
 class_definition
@@ -754,6 +886,10 @@ class_statement
     | func_definition { return $0; }
     ;
 
+# endregion
+
+# region Enum Stuff
+
 # Enum
 enum_definition
     = access_modifier KW_ENUM NAME OPEN_CURLY enum_statements CLOSE_CURLY
@@ -788,3 +924,5 @@ enum_statement
         return out;
     }
     ;
+
+# endregion
