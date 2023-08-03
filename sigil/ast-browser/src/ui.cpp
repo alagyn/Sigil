@@ -320,8 +320,6 @@ void ASTGraphBrowser::recurseLoadTree(ASTNodePtr tree, int depth)
 
     if(tree)
     {
-        std::cout << "D" << depth << " N" << tree->nodeID << " "
-                  << astNodeTypeName(tree->nodeType) << "\n";
         switch(tree->nodeType)
         {
         case ASTNodeType::Definition:

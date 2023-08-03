@@ -84,6 +84,7 @@ enum class ExprType
     LitMap,
 
     Call,
+    CallArgs,
     Dot,
     Subscript,
     KeyVal
@@ -202,6 +203,8 @@ enum class StmtType
 
     While,
     DoWhile,
+
+    With,
 
     Comprehension,
 

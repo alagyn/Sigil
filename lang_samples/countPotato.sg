@@ -1,5 +1,5 @@
 
-int main(list[string] args)
+int main(list<string> args)
 {
     count = 0;
 
@@ -13,8 +13,8 @@ int main(list[string] args)
             }
         }
     }
-    
-    print(f"There are {count} potatos in {sys.args[0]}");
-  
+
+    print("There are {count} potatos in {args[0]}");
+
     return 0;
 }

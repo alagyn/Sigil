@@ -75,12 +75,15 @@ KW_ELSE = "else";
 KW_FOR = "for";
 KW_IN = "in";
 KW_IF = "if";
+KW_THEN = "then";
 KW_AND = "and";
 KW_OR = "or";
 KW_NOT = "not";
 KW_RETURN = "return";
 KW_TO = "to";
 KW_WHILE = "while";
+KW_WITH = "with";
+KW_AS = "as";
 KW_ABSTRACT = "abstract";
 KW_STATIC = "static";
 KW_ENUM = "enum";
@@ -414,6 +417,7 @@ statement
     | do_while_statement { return $0; }
     | for_statement { return $0; }
     | try_catch_statement { return $0; }
+    | with_statement { return $0; }
     ;
 
 update_expr
@@ -444,12 +448,34 @@ if_statement
         out->elseStmt = $else_statement;
 
         return out;
-    };
+    }
+    ;
 else_statement
     = KW_ELSE body { return $body; }
     | KW_ELSE if_statement # This will recurse for more else-ifs
     { return $if_statement; }
     | EMPTY { return nullptr; }
+    ;
+
+# With statments
+with_statement
+    = KW_WITH expression body
+    {
+        auto out = make_shared<StmtNode>(StmtType::With);
+        out->update = $expression;
+        out->body = $body;
+
+        return out;
+    }
+    | KW_WITH expression KW_AS name body
+    {
+        auto out = make_shared<StmtNode>(StmtType::With);
+        out->decl = $name;
+        out->update = $expression;
+        out->body = $body;
+
+        return out;
+    }
     ;
 
 # while statements
@@ -495,17 +521,18 @@ for_statement
 
         return out;
     }
-    | KW_FOR name_list KW_IN expression KW_WHILE expression KW_THEN update_expr body
+    ##
+    | KW_FOR update_expr KW_WHILE expression KW_THEN update_expr body
     {
         auto out = make_shared<StmtNode>(StmtType::ForWhile);
-        out->decl = $name_list;
-        out->iterable = $3;
-        out->check = $5;
-        out->update = $7;
+        out->decl = $1;
+        out->check = $3;
+        out->update = $5;
         out->body = $body;
 
         return out;
     }
+    ##
     ;
 
 return_statement
@@ -695,9 +722,9 @@ inc_term
 # The bottom layer of an expression. A single unit that can be operated on
 bottom_val
     # Function calls
-    = bottom_val OPEN_PAREN expr_list CLOSE_PAREN
+    = bottom_val OPEN_PAREN func_call_args CLOSE_PAREN
     {
-        return make_shared<ExprNode>(ExprType::Call, $bottom_val, $expr_list);
+        return make_shared<ExprNode>(ExprType::Call, $bottom_val, $func_call_args);
     }
     | bottom_val OPEN_PAREN CLOSE_PAREN # avoiding the EMPTY case for args since it causes issues
     {
@@ -720,6 +747,47 @@ bottom_val
     | name { return $0; }
     # parenthesis
     | OPEN_PAREN expression CLOSE_PAREN { return $1; }
+    ;
+
+func_call_args
+    = func_expr_list COMMA kwArgs
+    {
+        return make_shared<ExprNode>(ExprType::CallArgs, $func_expr_list, $kwArgs);
+    }
+    | func_expr_list
+    {
+        return make_shared<ExprNode>(ExprType::CallArgs, $func_expr_list, nullptr);
+    }
+    | kwArgs
+    {
+        return make_shared<ExprNode>(ExprType::CallArgs, nullptr, $kwArgs);
+    }
+    ;
+
+# This prevents conflicts with expr_list
+func_expr_list
+    = expression
+    {
+        return $0;
+    }
+    | func_expr_list COMMA expression
+    {
+        $2->next = $0; // TODO this is reversed...
+        return $0;
+    }
+    ;
+
+kwArgs
+    = name OP_ASSIGN expression
+    {
+        return make_shared<ExprNode>(ExprType::KeyVal, $name, $expression);
+    }
+    | name OP_ASSIGN expression COMMA kwArgs
+    {
+        auto out = make_shared<ExprNode>(ExprType::KeyVal, $name, $expression);
+        out->next = $kwArgs;
+        return out;
+    }
     ;
 
 # endregion
@@ -747,7 +815,11 @@ name_list
 for_if_clause
     = KW_FOR name_list KW_IN expression if_clause
     {
-        return make_shared<StmtNode>(StmtNode::ForIn,)
+        auto out = make_shared<StmtNode>(StmtType::ForIn);
+        out->decl = $name_list;
+        out->iterable = $expression;
+        out->check = $if_clause;
+        return out;
     }
     ;
 
@@ -758,7 +830,10 @@ if_clause
     }
     | KW_IF expression else_clause
     {
-
+        auto out = make_shared<StmtNode>(StmtType::If);
+        out->check = $expression;
+        out->elseStmt = $else_clause;
+        return out;
     }
     ;
 
@@ -777,18 +852,41 @@ comprehension
     # List comprehension
     = OPEN_SQUARE expression for_if_clause CLOSE_SQUARE
     {
-        return
+        auto out = make_shared<StmtNode>(StmtType::Comprehension);
+        out->decl = $expression;
+        auto for_if = static_pointer_cast<StmtNode>($for_if_clause);
+        if(for_if)
+        {
+            out->check = for_if->check;
+            out->elseStmt = for_if->elseStmt;
+        }
+        return out;
     }
     # Set comprehension
     | OPEN_CURLY expression for_if_clause CLOSE_CURLY
     {
-        return $1;
+        auto out = make_shared<StmtNode>(StmtType::Comprehension);
+        out->decl = $expression;
+        auto for_if = static_pointer_cast<StmtNode>($for_if_clause);
+        if(for_if)
+        {
+            out->check = for_if->check;
+            out->elseStmt = for_if->elseStmt;
+        }
+        return out;
     }
     # Map comprehension
     | OPEN_CURLY keyval_pair for_if_clause CLOSE_CURLY
     {
-        // TODO
-        return nullptr;
+        auto out = make_shared<StmtNode>(StmtType::Comprehension);
+        out->decl = $keyval_pair;
+        auto for_if = static_pointer_cast<StmtNode>($for_if_clause);
+        if(for_if)
+        {
+            out->check = for_if->check;
+            out->elseStmt = for_if->elseStmt;
+        }
+        return out;
     }
     ;
 
@@ -913,14 +1011,14 @@ enum_statements
     ;
 
 enum_statement
-    = NAME SEMICOLON
+    = name SEMICOLON
     {
-        return make_shared<ExprNode>(ExprType::LitInt, $NAME);
+        return make_shared<ExprNode>(ExprType::KeyVal, $name, nullptr);
     }
-    | NAME OP_ASSIGN LIT_INT SEMICOLON
+    | name OP_ASSIGN LIT_INT SEMICOLON
     {
-        auto out = make_shared<ExprNode>(ExprType::LitInt, $NAME);
-        out->int_val = std::stoi($LIT_INT);
+        auto value = make_shared<ExprNode>(std::stoi($LIT_INT));
+        auto out = make_shared<ExprNode>(ExprType::KeyVal, $name, value);
         return out;
     }
     ;

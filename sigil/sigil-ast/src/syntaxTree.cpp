@@ -224,6 +224,8 @@ const char* const exprTypeName(ExprType type)
         return "LitMap";
     case ExprType::Call:
         return "Call";
+    case ExprType::CallArgs:
+        return "CallArgs";
     case ExprType::Dot:
         return "Dot";
     case ExprType::Subscript:
@@ -326,6 +328,8 @@ const char* const stmtTypeName(StmtType type)
         return "While";
     case StmtType::DoWhile:
         return "DoWhile";
+    case StmtType::With:
+        return "With";
     case StmtType::Comprehension:
         return "Comprehension";
     case StmtType::Return:

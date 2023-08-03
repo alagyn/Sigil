@@ -1,47 +1,62 @@
- 
- values = [0, 1, 2, 3, 4, 5, 6]
- 
- int main(list[string] args)
+
+ values = [0, 1, 2, 3, 4, 5, 6];
+
+ int main(list<string> args)
  {
         for x in values
         {
             print(x);
         }
-        
+
+        ##
         for x = 0 while x < values.len then x += 2
         {
             print(x + values[x]);
         }
-        
+        ##
+
         sum = 0;
-        
+
         for x in values
         {
             sum += x;
-            if sum > 5 then break;
+            if sum > 5
+            {
+                break;
+            }
         }
-        
+
         sum = 0;
-        
+
         for x in values
         {
-            if x <= 2 then continue;
-            
-            if x == 6 then break else sum += x;
+            if x <= 2
+            {
+                 continue;
+            }
+
+            if x == 6
+            {
+                break;
+            }
+            else
+            {
+                sum += x;
+            }
         }
-        
+
         print(sum);
-        
+
         do
         {
             sum -= 5;
         }
         while sum > 0;
-        
+
         for x in 0 to values.len
         {
-          //code
+          # code
         }
-        
+
         return 0;
  }
