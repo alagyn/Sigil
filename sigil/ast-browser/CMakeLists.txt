@@ -2,7 +2,7 @@
 project(ast-browser)
 
 set(${PROJECT_NAME}_SRCS
-    src/main.cpp
+    src/ast-browser.cpp
     src/ui.cpp
 )
 

@@ -56,6 +56,9 @@ enum class ExprType
     CompEQ,
     CompNEQ,
 
+    In,
+    NotIn,
+
     LogAnd,
     LogOr,
     LogNot,
@@ -72,6 +75,8 @@ enum class ExprType
     LitTrue,
     LitFalse,
     LitInt,
+    LitUInt,
+    LitHex,
     LitFloat,
     LitStr,
 
@@ -100,14 +105,16 @@ public:
     ExprNode(ExprType type, std::string name);
     ExprNode(ExprType type);
     ExprNode(std::string str_val);
-    explicit ExprNode(int int_val);
+    explicit ExprNode(int64_t int_val);
+    explicit ExprNode(uint64_t uint_val);
     explicit ExprNode(double float_val);
 
     ExprType type;
     ASTNodePtr left;
     ASTNodePtr right;
 
-    int int_val;
+    int64_t int_val;
+    uint64_t uint_val;
     double float_val;
     std::string str_val;
 };
@@ -121,7 +128,16 @@ enum class PrimitiveType
     // Used when we get a user defined type
     Unknown,
     Bool,
-    Int,
+
+    Int8,
+    Int16,
+    Int32,
+    Int64,
+    UInt8,
+    UInt16,
+    UInt32,
+    UInt64,
+
     Float,
     Str,
     Array,

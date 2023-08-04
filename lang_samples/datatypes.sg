@@ -1,0 +1,58 @@
+
+int main(array<str> args)
+{
+    array<str> food = ["beans", 'corn', 'apples', 'oranges'];
+    list<int> nums = [0, 1, 2, 3];
+    
+    set<float> floatSet = {4.0, 3.2, 5, 45};
+    
+    bool flag = true or false;
+    
+    tuple<float, int, str> notATuple = (2.1, 3, "jimothy");
+    
+    map<int, str> dict = {
+        1: "one",
+        2: "two",
+        42: "forty-two"
+    };
+
+    uint asdf = 25;
+    beans = 65u;
+
+    # int/uint == int64/uint64
+    int8 byte = 200;
+    int16 word = 25;
+    int32 dword = 50;
+
+    # This is the same as a int
+    int64 qword = 100;
+
+    # hex literals
+    ##
+        if otherwise unspecified, var will be the smallest containing
+        integer type, respecting leading zeros
+
+        hex literals are all implicitly unsigned unless specified
+    ##
+    # These will be uint8
+    newByte = 0xFF;
+    newByte2 = 0x00;
+
+    # This will not
+    uint16 newWord = 0xFF;
+    # This will make the var act as signed, but will not extend leading 1s
+    # TODO this may change, but how often will users need to hard code a signed int like this
+    int16 newWord2 = 0xFF; # This is the same as 0x00FF
+
+    if 25 in dict
+    {
+        # code
+    }
+    else if 4.0 in floatSet
+    {
+        # code
+    }
+
+    uint32 what = 25u;
+    int64 ever = -13;
+}

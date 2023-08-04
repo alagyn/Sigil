@@ -1,5 +1,6 @@
 %include <memory>
 %include <sigil-ast/syntaxTree.h>
+%include <boost/lexical_cast.hpp>
 
 %return std::shared_ptr<sigil::ASTNode>
 
@@ -98,11 +99,14 @@ KW_TRUE = "true";
 KW_FALSE = "false";
 
 # Literals
-LIT_INT = '[0-9]+';
+LIT_INT = '-?[0-9]+';
+LIT_UINT = '[0-9]+u';
 LIT_FLOAT = "[0-9]+\.[0-9]+"; # TODO scientific notation?
 
 DOUBLE_QUOTE_STR = '"([^"]|(\\"))*"';
 SINGLE_QUOTE_STR = "'([^']|(\\'))*'";
+
+LIT_HEX = '0x[0-9A-F]{1,8}';
 
 # endregion
 
@@ -145,21 +149,33 @@ lit_set
     ;
 
 lit_tuple
-    = OPEN_PAREN tuple_list CLOSE_PAREN
+    = OPEN_PAREN tuple_list1 CLOSE_PAREN
     {
-        return make_shared<ExprNode>(ExprType::LitTuple, $tuple_list, nullptr);
+        return make_shared<ExprNode>(ExprType::LitTuple, $tuple_list1, nullptr);
     }
     ;
 
-tuple_list
-    = expression COMMA
-    {
-        return $0;
-    }
-    | expression COMMA tuple_list
+tuple_list1
+    = expression COMMA tuple_list2
     {
         $0->next = $2;
         return $0;
+    }
+    ;
+
+tuple_list2
+    = expression COMMA tuple_list2
+    {
+        $0->next = $2;
+        return $0;
+    }
+    | expression
+    {
+        return $0;
+    }
+    | EMPTY
+    {
+        return nullptr;
     }
     ;
 
@@ -189,13 +205,27 @@ map_expression
 literal
     = LIT_INT
     {
-        int val = stoi($0);
+        int64_t val = boost::lexical_cast<int64_t>($0);
         return make_shared<ExprNode>(val);
     }
     | LIT_FLOAT
     {
-        double val = stod($0);
+        double val = boost::lexical_cast<double>($0);
         return make_shared<ExprNode>(val);
+    }
+    | LIT_UINT
+    {
+        std::string str_val = $0;
+        // Pop the 'u' off the back
+        str_val.pop_back();
+        uint64_t val = boost::lexical_cast<uint64_t>(str_val);
+        return make_shared<ExprNode>(val);
+    }
+    | LIT_HEX
+    {
+        auto out = make_shared<ExprNode>(ExprType::LitHex);
+        out->str_val = $LIT_HEX;
+        return out;
     }
     | lit_set { return $0; }
     | lit_string { return $0; }
@@ -216,10 +246,20 @@ TYPE_LIST = "list";
 TYPE_MAP = "map";
 TYPE_SET = "set";
 TYPE_STR = "str";
-TYPE_INT = "int";
 TYPE_FLOAT = "float";
 TYPE_BOOL = "bool";
 TYPE_TUPLE = "tuple";
+
+TYPE_INT = "int";
+TYPE_INT8 = "int8";
+TYPE_INT16 = "int16";
+TYPE_INT32 = "int32";
+TYPE_INT64 = "int64";
+TYPE_UINT = "uint";
+TYPE_UINT8 = "uint8";
+TYPE_UINT16 = "uint16";
+TYPE_UINT32 = "uint32";
+TYPE_UINT64 = "uint64";
 
 type
     = TYPE_ARRAY OP_LT type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Array, $type); }
@@ -228,7 +268,19 @@ type
     | TYPE_SET OP_LT type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Set, $type); }
     | TYPE_TUPLE OP_LT type_list OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Tuple, $type_list); }
     | TYPE_STR { return make_shared<DataTypeNode>(PrimitiveType::Str); }
-    | TYPE_INT { return make_shared<DataTypeNode>(PrimitiveType::Int); }
+    # Int
+    | TYPE_INT8 { return make_shared<DataTypeNode>(PrimitiveType::Int8); }
+    | TYPE_INT16 { return make_shared<DataTypeNode>(PrimitiveType::Int16); }
+    | TYPE_INT32 { return make_shared<DataTypeNode>(PrimitiveType::Int32); }
+    | TYPE_INT64 { return make_shared<DataTypeNode>(PrimitiveType::Int64); }
+    | TYPE_INT { return make_shared<DataTypeNode>(PrimitiveType::Int64); }
+    # Uint
+    | TYPE_UINT8 { return make_shared<DataTypeNode>(PrimitiveType::UInt8); }
+    | TYPE_UINT16 { return make_shared<DataTypeNode>(PrimitiveType::UInt16); }
+    | TYPE_UINT32 { return make_shared<DataTypeNode>(PrimitiveType::UInt32); }
+    | TYPE_UINT64 { return make_shared<DataTypeNode>(PrimitiveType::UInt64); }
+    | TYPE_UINT { return make_shared<DataTypeNode>(PrimitiveType::UInt64); }
+
     | TYPE_FLOAT { return make_shared<DataTypeNode>(PrimitiveType::Float); }
     | TYPE_BOOL { return make_shared<DataTypeNode>(PrimitiveType::Bool); }
     | KW_NULL { return make_shared<DataTypeNode>(PrimitiveType::Null); }
@@ -644,7 +696,13 @@ expression
     ;
 
 log_and_expr
-    = log_and_expr KW_AND bit_or_expr { return make_shared<ExprNode>(ExprType::LogAnd, $0, $2); }
+    = log_and_expr KW_AND inclusion_expr { return make_shared<ExprNode>(ExprType::LogAnd, $0, $2); }
+    | inclusion_expr { return $0; }
+    ;
+
+inclusion_expr
+    = inclusion_expr KW_IN bit_or_expr { return make_shared<ExprNode>(ExprType::In, $0, $2); }
+    | inclusion_expr KW_NOT KW_IN bit_or_expr { return make_shared<ExprNode>(ExprType::NotIn, $0, $3); }
     | bit_or_expr { return $0; }
     ;
 
@@ -1017,7 +1075,7 @@ enum_statement
     }
     | name OP_ASSIGN LIT_INT SEMICOLON
     {
-        auto value = make_shared<ExprNode>(std::stoi($LIT_INT));
+        auto value = make_shared<ExprNode>(boost::lexical_cast<uint64_t>($LIT_INT));
         auto out = make_shared<ExprNode>(ExprType::KeyVal, $name, value);
         return out;
     }

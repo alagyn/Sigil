@@ -292,83 +292,105 @@ ASTGraphBrowser::ASTGraphBrowser(ASTNodePtr tree)
     , nodes()
 
 {
-    recurseLoadTree(tree, 0);
+    recurseLoadTree(tree, 0, 0);
 }
 
 constexpr int HOR_OFF = 300;
 constexpr int VERT_OFF = 200;
 
 template<class T, class N>
-std::shared_ptr<T> ASTGraphBrowser::makeWrap(N node, int depth)
+std::shared_ptr<T> ASTGraphBrowser::makeWrap(N node, int depth, int loc)
 {
     auto out = make_shared<T>(node, portIdGen);
-    if(depthCounts.size() == depth)
-    {
-        depthCounts.push_back(0);
-    }
-
+    out->loc = loc;
     out->pos.x = depth * HOR_OFF;
-    out->pos.y = depthCounts[depth] * VERT_OFF;
-    ++depthCounts[depth];
+    out->pos.y = loc * VERT_OFF;
 
     return out;
 }
 
-void ASTGraphBrowser::recurseLoadTree(ASTNodePtr tree, int depth)
+int ASTGraphBrowser::maybeLoad(ASTNodePtr tree, int depth, int loc)
+{
+    if(tree)
+    {
+        int newLoc = recurseLoadTree(tree, depth, loc);
+        if(newLoc == loc)
+        {
+            return newLoc + 1;
+        }
+        return newLoc;
+    }
+    return loc;
+}
+
+int ASTGraphBrowser::recurseLoadTree(ASTNodePtr tree, int depth, int loc)
 {
     int nextDepth = depth + 1;
 
-    if(tree)
+    while(tree)
     {
+        int newLoc = loc;
         switch(tree->nodeType)
         {
         case ASTNodeType::Definition:
         {
             auto x = static_pointer_cast<DefNode>(tree);
-            auto node = makeWrap<DefNodeWrap>(x, depth);
+            newLoc = maybeLoad(x->dataType, nextDepth, newLoc);
+            newLoc = maybeLoad(x->body, nextDepth, newLoc);
+            auto node = makeWrap<DefNodeWrap>(x, depth, loc);
             nodes.push_back(node);
-            recurseLoadTree(x->dataType, nextDepth);
-            recurseLoadTree(x->body, nextDepth);
 
             break;
         }
         case ASTNodeType::Datatype:
         {
             auto x = static_pointer_cast<DataTypeNode>(tree);
-            auto node = makeWrap<DataTypeNodeWrap>(x, depth);
+            newLoc = maybeLoad(x->subtype1, nextDepth, newLoc);
+            newLoc = maybeLoad(x->subtype2, nextDepth, newLoc);
+            auto node = makeWrap<DataTypeNodeWrap>(x, depth, loc);
             nodes.push_back(node);
-            recurseLoadTree(x->subtype1, nextDepth);
-            recurseLoadTree(x->subtype2, nextDepth);
+
             break;
         }
         case ASTNodeType::Statement:
         {
             auto x = static_pointer_cast<StmtNode>(tree);
-            auto node = makeWrap<StmtNodeWrap>(x, depth);
+            newLoc = maybeLoad(x->decl, nextDepth, newLoc);
+            newLoc = maybeLoad(x->check, nextDepth, newLoc);
+            newLoc = maybeLoad(x->update, nextDepth, newLoc);
+            newLoc = maybeLoad(x->body, nextDepth, newLoc);
+            newLoc = maybeLoad(x->elseStmt, nextDepth, newLoc);
+            auto node = makeWrap<StmtNodeWrap>(x, depth, loc);
             nodes.push_back(node);
-            recurseLoadTree(x->decl, nextDepth);
-            recurseLoadTree(x->check, nextDepth);
-            recurseLoadTree(x->update, nextDepth);
-            recurseLoadTree(x->body, nextDepth);
-            recurseLoadTree(x->elseStmt, nextDepth);
+
             break;
         }
         case ASTNodeType::Expr:
         {
             auto x = static_pointer_cast<ExprNode>(tree);
-            auto node = makeWrap<ExprNodeWrap>(x, depth);
+            newLoc = maybeLoad(x->left, nextDepth, newLoc);
+            newLoc = maybeLoad(x->right, nextDepth, newLoc);
+            auto node = makeWrap<ExprNodeWrap>(x, depth, loc);
             nodes.push_back(node);
-            recurseLoadTree(x->left, nextDepth);
-            recurseLoadTree(x->right, nextDepth);
             break;
         }
         default:
-            nodes.push_back(makeWrap<TempNodeWrap>(tree, depth));
+            nodes.push_back(makeWrap<TempNodeWrap>(tree, depth, loc));
             break;
         }
 
-        recurseLoadTree(tree->next, nextDepth);
+        //return recurseLoadTree(tree->next, nextDepth, newLoc);
+        tree = tree->next;
+        if(newLoc == loc)
+        {
+            loc = newLoc + 1;
+        }
+        else
+        {
+            loc = newLoc;
+        }
     }
+    return loc;
 }
 
 constexpr ImGuiWindowFlags windowFlags =

@@ -1,0 +1,6 @@
+
+int main(list<string> args)
+{
+    print("hello world");
+    return 1;
+}

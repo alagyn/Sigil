@@ -1,5 +1,7 @@
 #include <sigil-ast/syntaxTree.h>
 
+#include <stdexcept>
+
 namespace sigil {
 
 unsigned NODE_IG_GEN = 0;
@@ -50,10 +52,17 @@ ExprNode::ExprNode(std::string str_val)
 {
 }
 
-ExprNode::ExprNode(int int_val)
+ExprNode::ExprNode(int64_t int_val)
     : ASTNode(ASTNodeType::Expr)
     , type(ExprType::LitInt)
     , int_val(int_val)
+{
+}
+
+ExprNode::ExprNode(uint64_t uint_val)
+    : ASTNode(ASTNodeType::Expr)
+    , type(ExprType::LitUInt)
+    , uint_val(uint_val)
 {
 }
 
@@ -122,6 +131,7 @@ const char* const astNodeTypeName(ASTNodeType type)
     switch(type)
     {
     default:
+        throw std::runtime_error("Invalid type");
     case ASTNodeType::Error:
         return "Error";
     case ASTNodeType::Expr:
@@ -144,6 +154,7 @@ const char* const exprTypeName(ExprType type)
     switch(type)
     {
     default:
+        throw std::runtime_error("Invalid type");
     case ExprType::Error:
         return "Error";
     case ExprType::Add:
@@ -184,6 +195,10 @@ const char* const exprTypeName(ExprType type)
         return "CompEQ";
     case ExprType::CompNEQ:
         return "CompNEQ";
+    case ExprType::In:
+        return "In";
+    case ExprType::NotIn:
+        return "NotIn";
     case ExprType::LogAnd:
         return "LogAnd";
     case ExprType::LogOr:
@@ -210,6 +225,10 @@ const char* const exprTypeName(ExprType type)
         return "LitFalse";
     case ExprType::LitInt:
         return "LitInt";
+    case ExprType::LitUInt:
+        return "LitUInt";
+    case ExprType::LitHex:
+        return "LitHex";
     case ExprType::LitFloat:
         return "LotFloat";
     case ExprType::LitStr:
@@ -240,6 +259,7 @@ const char* const primitiveTypeName(PrimitiveType type)
     switch(type)
     {
     default:
+        throw std::runtime_error("Invalid type");
     case PrimitiveType::Error:
         return "Error";
     case PrimitiveType::Null:
@@ -248,8 +268,25 @@ const char* const primitiveTypeName(PrimitiveType type)
         return "Unknown";
     case PrimitiveType::Bool:
         return "Bool";
-    case PrimitiveType::Int:
-        return "Int";
+    // Ints
+    case PrimitiveType::Int8:
+        return "Int8";
+    case PrimitiveType::Int16:
+        return "Int16";
+    case PrimitiveType::Int32:
+        return "Int32";
+    case PrimitiveType::Int64:
+        return "Int64";
+    // Uints
+    case PrimitiveType::UInt8:
+        return "UInt8";
+    case PrimitiveType::UInt16:
+        return "UInt16";
+    case PrimitiveType::UInt32:
+        return "UInt32";
+    case PrimitiveType::UInt64:
+        return "UInt64";
+
     case PrimitiveType::Float:
         return "Float";
     case PrimitiveType::Str:
@@ -278,6 +315,7 @@ const char* const accessModName(AccessMod mod)
     switch(mod)
     {
     default:
+        throw std::runtime_error("Invalid type");
     case AccessMod::Default:
         return "Default";
     case AccessMod::Public:
@@ -296,6 +334,7 @@ const char* const stmtTypeName(StmtType type)
     switch(type)
     {
     default:
+        throw std::runtime_error("Invalid type");
     case StmtType::Error:
         return "Error";
     case StmtType::Assign:
@@ -348,6 +387,7 @@ const char* const specialModName(SpecialMod mod)
     switch(mod)
     {
     default:
+        throw std::runtime_error("Invalid type");
     case SpecialMod::None:
         return "None";
     case SpecialMod::Abstract:
@@ -362,6 +402,7 @@ const char* const defTypeName(DefType type)
     switch(type)
     {
     default:
+        throw std::runtime_error("Invalid type");
     case DefType::Error:
         return "Error";
     case DefType::Var:

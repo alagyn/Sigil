@@ -3,6 +3,7 @@
 #include <imgui.h>
 
 #include <memory>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -12,6 +13,7 @@ class NodeWrap
 {
 public:
     ASTNodePtr base;
+    int loc;
     ImVec2 pos;
 
     int nextId;
@@ -40,7 +42,8 @@ public:
 
 private:
     void render();
-    void recurseLoadTree(ASTNodePtr tree, int depth);
+    int recurseLoadTree(ASTNodePtr tree, int depth, int loc);
+    int maybeLoad(ASTNodePtr tree, int depth, int loc);
 
     void renderDef(DefNodePtr defNode);
     void renderDatatype(DataTypeNodePtr datatype);
@@ -52,9 +55,9 @@ private:
     int portIdGen;
 
     std::vector<NodeWrapPtr> nodes;
-    std::vector<int> depthCounts;
 
-    template<class T, class N> std::shared_ptr<T> makeWrap(N node, int depth);
+    template<class T, class N>
+    std::shared_ptr<T> makeWrap(N node, int depth, int parentLoc);
 };
 
 } //namespace sigil
