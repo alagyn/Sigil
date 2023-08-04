@@ -1,0 +1,81 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Sigil",
+    "patterns": [
+        {
+            "include": "#keywords"
+        },
+        {
+            "include": "#dstrings"
+        },
+        {
+            "include": "#sstrings"
+        }
+    ],
+    "repository": {
+        "keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.control.sigil",
+                    "match": "\\b(if|while|for|return|in|do|then|else|and|or|not|to|with|as|try|catch|private|public|shared|readonly|abstract|static|enum|class|init|delete|throw|null|true|false|import)\\b"
+                },
+                {
+                    "name": "storage.type.sigil",
+                    "match": "\\b(array|list|map|set|str|float|bool|tuple|int|int8|int16|int32|int64|uint|uint8|uint16|uint32|uint64)\\b"
+                },
+                {
+                    "name": "comment.block.sigil",
+                    "begin": "##",
+                    "end": "##"
+                },
+                {
+                    "name": "comment.line.sigil",
+                    "match": "#[^\n]*\n"
+                },
+                {
+                    "name": "constant.numeric.hex.sigil",
+                    "match": "\\b0x[0-9A-F]{1,8}\\b"
+                },
+                {
+                    "name": "constant.numeric.float.sigil",
+                    "match": "\\b-?[0-9]+\\.[0-9]+\\b"
+                },
+                {
+                    "name": "constant.numeric.integer.unsigned.sigil",
+                    "match": "\\b[0-9]+u\\b"
+                },
+                {
+                    "name": "constant.numeric.integer.signed.sigil",
+                    "match": "\\b-?[0-9]+\\b"
+                },
+                {
+                    "name": "keyword.operator",
+                    "match": "\\b(=|<=|>=|<|>|\\+=|-=|/=|\\*=)\\b"
+                }
+            ]
+        },
+        "dstrings": {
+            "name": "string.quoted.double.sigil",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.sigil",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        "sstrings": {
+            "name": "string.quoted.single.sigil",
+            "begin": "'",
+            "end": "'",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.sigil",
+                    "match": "\\\\."
+                }
+            ]
+        }
+    },
+    "scopeName": "source.sigil"
+}

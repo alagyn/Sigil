@@ -417,6 +417,8 @@ const char* const defTypeName(DefType type)
         return "Class";
     case DefType::Enum:
         return "Enum";
+    case DefType::Import:
+        return "Import";
     }
 }
 

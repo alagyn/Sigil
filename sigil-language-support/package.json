@@ -1,0 +1,30 @@
+{
+  "name": "sigil-language-support",
+  "displayName": "sigil-language-support",
+  "description": "Syntax highlighting for Sigil",
+  "repository": {
+    "url": "https://github.com/alagyn/Sigil"
+  },
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.79.0"
+  },
+  "publisher": "Ben \"alagyn\" Kimbrough",
+  "icon": "SigilMk7-128.png",
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "sigil",
+      "aliases": ["Sigil", "sigil"],
+      "extensions": [".sg"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "sigil",
+      "scopeName": "source.sigil",
+      "path": "./syntaxes/sigil.tmLanguage.json"
+    }]
+  }
+}

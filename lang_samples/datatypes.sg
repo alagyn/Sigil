@@ -23,8 +23,6 @@ int main(array<str> args)
     int8 byte = 200;
     int16 word = 25;
     int32 dword = 50;
-
-    # This is the same as a int
     int64 qword = 100;
 
     # hex literals
@@ -34,9 +32,8 @@ int main(array<str> args)
 
         hex literals are all implicitly unsigned unless specified
     ##
-    # These will be uint8
-    newByte = 0xFF;
-    newByte2 = 0x00;
+    newByte = 0xFF; # uint8
+    newNum = 0x000; # uint16
 
     # This will not
     uint16 newWord = 0xFF;
@@ -55,4 +52,8 @@ int main(array<str> args)
 
     uint32 what = 25u;
     int64 ever = -13;
+
+    str longStr = "this is a long\n"
+        "string that gets auto concatted\n"
+        'no matter the quote type';
 }

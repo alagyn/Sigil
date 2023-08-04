@@ -295,7 +295,8 @@ enum class DefType
     Delete,
 
     Class,
-    Enum
+    Enum,
+    Import
 };
 
 const char* const defTypeName(DefType);

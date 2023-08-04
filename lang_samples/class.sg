@@ -1,4 +1,4 @@
-#import math;
+import math;
 
 class Vehicle
 {
@@ -32,7 +32,7 @@ class Vehicle
         string name;
     }
     
-    public init Vehicle(string name, int gasMax, float mpg)
+    public init Vehicle(str name, int gasMax, float mpg)
     {
         ##
         This is a multiline comment
@@ -82,7 +82,7 @@ class Vehicle
 
 }
 
-int main(list<string> args)
+int main(list<str> args)
 {
     c1 = Vehicle("Jimothy", 10, 2);
     

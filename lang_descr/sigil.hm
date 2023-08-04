@@ -13,9 +13,10 @@
 %ignore "##((?!##)(.|\n))*?##"
 
 # The starting rule, must be first
-program = top_level_defs { return $0; };
+program = top_level_defs;
+
 top_level_defs
-    = top_level_def { return $0; }
+    = top_level_def
     | top_level_def top_level_defs
     {
         $0->next = $1;
@@ -85,6 +86,7 @@ KW_TO = "to";
 KW_WHILE = "while";
 KW_WITH = "with";
 KW_AS = "as";
+KW_IMPORT = "import";
 KW_ABSTRACT = "abstract";
 KW_STATIC = "static";
 KW_ENUM = "enum";
@@ -101,7 +103,7 @@ KW_FALSE = "false";
 # Literals
 LIT_INT = '-?[0-9]+';
 LIT_UINT = '[0-9]+u';
-LIT_FLOAT = "[0-9]+\.[0-9]+"; # TODO scientific notation?
+LIT_FLOAT = "-?[0-9]+\.[0-9]+"; # TODO scientific notation?
 
 DOUBLE_QUOTE_STR = '"([^"]|(\\"))*"';
 SINGLE_QUOTE_STR = "'([^']|(\\'))*'";
@@ -120,7 +122,7 @@ lit_string
         str1->str_val.append(str2->str_val);
         return str1;
     }
-    | lit_string2 { return $0; }
+    | lit_string2
     ;
 
 # Need this for recursion to not cause conflicts
@@ -170,9 +172,6 @@ tuple_list2
         return $0;
     }
     | expression
-    {
-        return $0;
-    }
     | EMPTY
     {
         return nullptr;
@@ -187,7 +186,7 @@ lit_map
     ;
 
 map_list
-    = map_expression { return $0; }
+    = map_expression
     | map_expression COMMA map_list
     {
         $0->next = $2;
@@ -227,12 +226,12 @@ literal
         out->str_val = $LIT_HEX;
         return out;
     }
-    | lit_set { return $0; }
-    | lit_string { return $0; }
-    | lit_list { return $0; }
-    | lit_map { return $0; }
-    | lit_bool { return $0; }
-    | lit_tuple { return $0; }
+    | lit_set
+    | lit_string
+    | lit_list
+    | lit_map
+    | lit_bool
+    | lit_tuple
     | KW_NULL { return make_shared<ExprNode>(ExprType::LitNull); }
     ;
 
@@ -294,9 +293,6 @@ type_list
         return $type;
     }
     | type
-    {
-        return $type;
-    }
     ;
 
 # endregion
@@ -329,10 +325,31 @@ name
     ;
 
 top_level_def
-    = func_definition { return $0; }
-    | class_definition { return $0; }
-    | enum_definition { return $0; }
-    | var_definition { return $0; }
+    = func_definition
+    | class_definition
+    | enum_definition
+    | var_definition
+    | import_statement
+    ;
+
+import_statement
+    = KW_IMPORT module_name SEMICOLON
+    {
+        return make_shared<DefNode>(DefType::Import, $module_name, "");
+    }
+    | KW_IMPORT module_name KW_AS NAME SEMICOLON
+    {
+        return make_shared<DefNode>(DefType::Import, $module_name, $NAME);
+    }
+    ;
+
+module_name
+    = name
+    | name OP_DOT module_name
+    {
+        $name->next = $module_name;
+        return $name;
+    }
     ;
 
 var_definition
@@ -425,12 +442,12 @@ func_definition
     ;
 
 func_arg_definitions
-    = func_arg_def_list { return $0; }
+    = func_arg_def_list
     | EMPTY { return nullptr; }
     ;
 
 func_arg_def_list
-    = func_arg_def { return $0; }
+    = func_arg_def
     | func_arg_def COMMA func_arg_def_list
     {
         $0->next = $2;
@@ -453,7 +470,7 @@ func_arg_def
     ;
 
 statements
-    = statement { return $0; }
+    = statement
     | statement statements # Recursion
     {
         $0->next = $1;
@@ -462,32 +479,26 @@ statements
     ;
 
 statement
-    = statement_body SEMICOLON { return $0; } # This enforces semicolons for all simple statements
-    | body { return $0; } # Allow arbitrary scopes
-    | if_statement { return $0; }
-    | while_statement { return $0; }
-    | do_while_statement { return $0; }
-    | for_statement { return $0; }
-    | try_catch_statement { return $0; }
-    | with_statement { return $0; }
+    = statement_body SEMICOLON # This enforces semicolons for all simple statements
+    | body # Allow arbitrary scopes
+    | if_statement
+    | while_statement
+    | do_while_statement
+    | for_statement
+    | try_catch_statement
+    | with_statement
     ;
 
 update_expr
     = expression
-    {
-        return $0;
-    }
     | assignment
-    {
-        return $0;
-    }
     ;
 
 statement_body
-    = assignment { return $0; }
-    | return_statement { return $0; }
-    | expression { return $0; }
-    | throw_statement { return $0; }
+    = assignment
+    | return_statement
+    | expression
+    | throw_statement
     ;
 
 # If statements
@@ -629,7 +640,7 @@ assign_op
     ;
 
 assign_expr
-    = expression { return $0; }
+    = expression
     | expression KW_IF expression KW_ELSE expression # x = 12 if b else 15;
     {
         auto out = make_shared<StmtNode>(StmtType::If);
@@ -670,9 +681,6 @@ catch_statements
         return $0;
     }
     | catch_statement
-    {
-        return $0;
-    }
     ;
 
 catch_statement
@@ -692,39 +700,39 @@ catch_statement
 # Expression, defines the order of operations
 expression
     = expression KW_OR log_and_expr { return make_shared<ExprNode>(ExprType::LogOr, $0, $2); }
-    | log_and_expr { return $0; }
+    | log_and_expr
     ;
 
 log_and_expr
     = log_and_expr KW_AND inclusion_expr { return make_shared<ExprNode>(ExprType::LogAnd, $0, $2); }
-    | inclusion_expr { return $0; }
+    | inclusion_expr
     ;
 
 inclusion_expr
     = inclusion_expr KW_IN bit_or_expr { return make_shared<ExprNode>(ExprType::In, $0, $2); }
     | inclusion_expr KW_NOT KW_IN bit_or_expr { return make_shared<ExprNode>(ExprType::NotIn, $0, $3); }
-    | bit_or_expr { return $0; }
+    | bit_or_expr
     ;
 
 bit_or_expr
     = bit_or_expr OP_BIT_OR bit_xor_expr { return make_shared<ExprNode>(ExprType::BitOr, $0, $2); }
-    | bit_xor_expr { return $0; }
+    | bit_xor_expr
     ;
 
 bit_xor_expr
     = bit_xor_expr OP_BIT_XOR bit_and_expr { return make_shared<ExprNode>(ExprType::BitXOr, $0, $2); }
-    | bit_and_expr { return $0; }
+    | bit_and_expr
     ;
 
 bit_and_expr
     = bit_and_expr OP_BIT_AND equ_expr { return make_shared<ExprNode>(ExprType::BitAnd, $0, $2); }
-    | equ_expr { return $0; }
+    | equ_expr
     ;
 
 equ_expr
     = equ_expr OP_EQ comp_expr { return make_shared<ExprNode>(ExprType::CompEQ, $0, $2); }
     | equ_expr OP_NEQ comp_expr { return make_shared<ExprNode>(ExprType::CompNEQ, $0, $2); }
-    | comp_expr { return $0; }
+    | comp_expr
     ;
 
 comp_expr
@@ -732,31 +740,31 @@ comp_expr
     | comp_expr OP_LTEQ shift_expr { return make_shared<ExprNode>(ExprType::CompLTEQ, $0, $2); }
     | comp_expr OP_GT shift_expr { return make_shared<ExprNode>(ExprType::CompGT, $0, $2); }
     | comp_expr OP_GTEQ shift_expr { return make_shared<ExprNode>(ExprType::CompGTEQ, $0, $2); }
-    | shift_expr { return $0; }
+    | shift_expr
     ;
 
 shift_expr
     = shift_expr OP_LSHIFT math_expr { return make_shared<ExprNode>(ExprType::LShift, $0, $2); }
     | shift_expr OP_RSHIFT math_expr { return make_shared<ExprNode>(ExprType::RShift, $0, $2); }
-    | math_expr { return $0; }
+    | math_expr
     ;
 
 math_expr
     = math_expr OP_PLUS term { return make_shared<ExprNode>(ExprType::Add, $0, $2); }
     | math_expr OP_MINUS term { return make_shared<ExprNode>(ExprType::Sub, $0, $2); }
-    | term { return $0; }
+    | term
     ;
 
 term
     = term OP_STAR factor { return make_shared<ExprNode>(ExprType::Mul, $0, $2); }
     | term OP_SLASH factor { return make_shared<ExprNode>(ExprType::Div, $0, $2); }
     | term OP_MOD factor { return make_shared<ExprNode>(ExprType::Mod, $0, $2); }
-    | factor { return $0; }
+    | factor
     ;
 
 factor
     = factor OP_POW pow_term { return make_shared<ExprNode>(ExprType::Pow, $0, $2); }
-    | pow_term { return $0; }
+    | pow_term
     ;
 
 pow_term
@@ -765,7 +773,7 @@ pow_term
     # Binary negation
     | KW_NOT inc_term { return make_shared<ExprNode>(ExprType::Not, $1, nullptr); }
     # Parentheses
-    | inc_term { return $0; }
+    | inc_term
     ;
 
 inc_term
@@ -774,7 +782,7 @@ inc_term
     | bottom_val OP_INC { return make_shared<ExprNode>(ExprType::PostInc, $0, nullptr); }
     | OP_DEC bottom_val { return make_shared<ExprNode>(ExprType::PreDec, $1, nullptr); }
     | bottom_val OP_DEC { return make_shared<ExprNode>(ExprType::PostDec, $0, nullptr); }
-    | bottom_val { return $0; }
+    | bottom_val
     ;
 
 # The bottom layer of an expression. A single unit that can be operated on
@@ -799,10 +807,10 @@ bottom_val
         return make_shared<ExprNode>(ExprType::Subscript, $0, $2);
     }
     # comprehensions
-    | comprehension { return $0; }
+    | comprehension
     # Literals
-    | literal { return $0; }
-    | name { return $0; }
+    | literal
+    | name
     # parenthesis
     | OPEN_PAREN expression CLOSE_PAREN { return $1; }
     ;
@@ -825,9 +833,6 @@ func_call_args
 # This prevents conflicts with expr_list
 func_expr_list
     = expression
-    {
-        return $0;
-    }
     | func_expr_list COMMA expression
     {
         $2->next = $0; // TODO this is reversed...
@@ -860,9 +865,6 @@ keyval_pair
 
 name_list
     = name
-    {
-        return $0;
-    }
     | name name_list
     {
         $0->next = $1;
@@ -950,9 +952,6 @@ comprehension
 
 expr_list
     = expression
-    {
-        return $0;
-    }
     | expression COMMA expr_list
     {
         $0->next = $2;
@@ -987,7 +986,7 @@ class_body
     ;
 
 var_def_list
-    = var_definition { return $0; }
+    = var_definition
     | var_definition var_def_list
     {
         $0->next = $1;
@@ -996,7 +995,7 @@ var_def_list
     ;
 
 class_statements
-    = class_statement { return $0; }
+    = class_statement
     | class_statement class_statements
     {
         $0->next = $1;
@@ -1039,7 +1038,7 @@ class_statement
 
         return $var_def_list;
     }
-    | func_definition { return $0; }
+    | func_definition
     ;
 
 # endregion
@@ -1060,7 +1059,7 @@ enum_definition
     };
 
 enum_statements
-    = enum_statement { return $0; }
+    = enum_statement
     | enum_statement enum_statements
     {
         $0->next = $1;

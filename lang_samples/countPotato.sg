@@ -1,5 +1,5 @@
 
-int main(list<string> args)
+int main(list<str> args)
 {
     count = 0;
 
