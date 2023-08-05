@@ -287,7 +287,7 @@ type
     ;
 
 type_list
-    = type COMMA type_list 
+    = type COMMA type_list
     {
         $type->next = $type_list;
         return $type;
@@ -335,11 +335,16 @@ top_level_def
 import_statement
     = KW_IMPORT module_name SEMICOLON
     {
-        return make_shared<DefNode>(DefType::Import, $module_name, "");
+        auto out = make_shared<StmtNode>(StmtType::Import);
+        out->decl = $module_name;
+        return out;
     }
-    | KW_IMPORT module_name KW_AS NAME SEMICOLON
+    | KW_IMPORT module_name KW_AS name SEMICOLON
     {
-        return make_shared<DefNode>(DefType::Import, $module_name, $NAME);
+        auto out = make_shared<StmtNode>(StmtNode::Import);
+        out->decl = $module_name;
+        out->body = $name;
+        return out;
     }
     ;
 
@@ -355,35 +360,44 @@ module_name
 var_definition
     = access_modifier special_mod type NAME SEMICOLON
     {
+        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
+        auto datatype = static_pointer_cast<DatatypeNode>($type);
+        auto decl = make_shared<DefNode>($NAME, datatype);
 
-        auto out = make_shared<DefNode>(DefType::Var, $type, $NAME);
-        out->accessMod = accessModNode->accessMod;
-        out->specialMod = specialModNode->specialMod;
+        decl->accessMod = accessModNode->accessMod;
+        decl->specialMod = specialModNode->specialMod;
+
+        out->decl = decl;
 
         return out;
     }
     | access_modifier special_mod type NAME OP_ASSIGN expression SEMICOLON
     {
+        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
-        auto out = make_shared<DefNode>(DefType::Var, $type, $NAME);
-        out->accessMod = accessModNode->accessMod;
-        out->specialMod = specialModNode->specialMod;
-        out->body = $expression;
+        auto datatype = static_pointer_cast<DataTypeNode>($type);
+        auto decl = make_shared<DefNode>($NAME, datatype, $expression);
+
+        decl->accessMod = accessModNode->accessMod;
+        decl->specialMod = specialModNode->specialMod;
+        out->decl = decl;
 
         return out;
     }
     | access_modifier special_mod NAME OP_ASSIGN expression SEMICOLON # infer the type
     {
+        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
-        auto type = make_shared<DataTypeNode>(PrimitiveType::Unknown);
-        auto out = make_shared<DefNode>(DefType::Var, type, $NAME);
-        out->accessMod = accessModNode->accessMod;
-        out->specialMod = specialModNode->specialMod;
-        out->body = $expression;
+        auto datatype = make_shared<DataTypeNode>(PrimitiveType::Unknown);
+        auto decl = make_shared<DefNode>($NAME, datatype, $expression);
+
+        decl->accessMod = accessModNode->accessMod;
+        decl->specialMod = specialModNode->specialMod;
+        out->decl = decl;
 
         return out;
     }
@@ -404,38 +418,42 @@ special_mod
 func_definition
     = access_modifier special_mod type NAME OPEN_PAREN func_arg_definitions CLOSE_PAREN body
     {
-        auto datatypeNode = make_shared<DataTypeNode>(PrimitiveType::Func, $type, $func_arg_definitions);
+        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
+        auto datatypeNode = make_shared<DataTypeNode>(PrimitiveType::Func, $type, $func_arg_definitions);
+        auto decl = make_shared<DefNode>($NAME, datatypeNode, $body);
 
-        auto out = make_shared<DefNode>(DefType::Func, datatypeNode, $NAME);
-        out->accessMod = accessModNode->accessMod;
-        out->specialMod = specialModNode->specialMod;
-        out->body = $body;
+        decl->accessMod = accessModNode->accessMod;
+        decl->specialMod = specialModNode->specialMod;
+        out->decl = decl;
 
         return out;
     }
     # Constructors
     | access_modifier KW_INIT NAME OPEN_PAREN func_arg_definitions CLOSE_PAREN body
     {
-        auto datatypeNode = make_shared<DataTypeNode>(PrimitiveType::Func, nullptr, $func_arg_definitions);
+        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
+        auto datatypeNode = make_shared<DataTypeNode>(PrimitiveType::Constr, nullptr, $func_arg_definitions);
+        auto decl = make_shared<DefNode>($NAME, datatypeNode, $body);
 
-        auto out = make_shared<DefNode>(DefType::Init, datatypeNode, $NAME);
-        out->accessMod = accessModNode->accessMod;
-        out->body = $body;
+        decl->accessMod = accessModNode->accessMod;
+        out->decl = decl;
 
         return out;
     }
     # Deconstructor
     | access_modifier KW_DELETE NAME OPEN_PAREN func_arg_definitions CLOSE_PAREN body
     {
-        auto datatypeNode = make_shared<DataTypeNode>(PrimitiveType::Func, nullptr, $func_arg_definitions);
+        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
+        auto datatypeNode = make_shared<DataTypeNode>(PrimitiveType::Func, nullptr, $func_arg_definitions);
+        auto decl = make_shared<DefNode>($NAME, datatypeNode, $body);
 
-        auto out = make_shared<DefNode>(DefType::Delete, datatypeNode, $NAME);
-        out->accessMod = accessModNode->accessMod;
-        out->body = $body;
+        decl->accessMod = accessModNode->accessMod;
+
+        out->decl;
 
         return out;
     }
@@ -459,13 +477,11 @@ func_arg_def
     # TODO is expression the right thing here? The value should be evaluatable at compile time
     = type NAME OP_ASSIGN expression
     {
-        auto out = make_shared<DefNode>(DefType::Var, $type, $NAME);
-        out->body = $expression;
-        return out;
+        return make_shared<DefNode>($NAME, $type, $expression);
     }
     | type NAME
     {
-        return make_shared<DefNode>(DefType::Var, $type, $NAME);
+        return make_shared<DefNode>($NAME, $type);
     }
     ;
 
@@ -481,6 +497,11 @@ statements
 statement
     = statement_body SEMICOLON # This enforces semicolons for all simple statements
     | body # Allow arbitrary scopes
+    {
+        auto out = make_shared<StmtNode>(StmtType::Scope);
+        out->body = $body;
+        return out;
+    }
     | if_statement
     | while_statement
     | do_while_statement
@@ -533,8 +554,10 @@ with_statement
     | KW_WITH expression KW_AS name body
     {
         auto out = make_shared<StmtNode>(StmtType::With);
-        out->decl = $name;
-        out->update = $expression;
+        auto datatype = make_shared<DataTypeNode>(PrimitiveType::Unknown);
+        auto decl = make_shared<DefNode>($NAME, datatype, $expression);
+
+        out->decl = decl;
         out->body = $body;
 
         return out;
@@ -608,48 +631,95 @@ return_statement
     };
 
 assignment
-    = bottom_val assign_op assign_expr
+    = bottom_val OP_ASSIGN expression
     {
-        auto out = static_pointer_cast<StmtNode>($assign_op);
+        auto out = make_shared<StmtNode>(StmtType::Assign);
         out->update = $bottom_val;
-        out->body = $assign_expr;
+        out->body = $expression;
 
         return out;
     }
-    | type name assign_op assign_expr
+# region Compound assignments, these just precompile to x = x [op] expression
+    | bottom_val OP_ADD_ASSIGN expression
     {
-        auto out = static_pointer_cast<StmtNode>($assign_op);
+        auto out = make_shared<StmtNode>(StmtType::Assign);
+        auto expr = make_shared<ExprNode>(ExprType::Add, $bottom_val, $expression);
+        out->update = $bottom_val;
+        out->body = $expression;
+
+        return out;
+    }
+    | bottom_val OP_SUB_ASSIGN expression
+    {
+        auto out = make_shared<StmtNode>(StmtType::Assign);
+        auto expr = make_shared<ExprNode>(ExprType::Sub, $bottom_val, $expression);
+        out->update = $bottom_val;
+        out->body = $expression;
+
+        return out;
+    }
+    | bottom_val OP_MUL_ASSIGN expression
+    {
+        auto out = make_shared<StmtNode>(StmtType::Assign);
+        auto expr = make_shared<ExprNode>(ExprType::Mul, $bottom_val, $expression);
+        out->update = $bottom_val;
+        out->body = $expression;
+
+        return out;
+    }
+    | bottom_val OP_DIV_ASSIGN expression
+    {
+        auto out = make_shared<StmtNode>(StmtType::Assign);
+        auto expr = make_shared<ExprNode>(ExprType::Div, $bottom_val, $expression);
+        out->update = $bottom_val;
+        out->body = $expression;
+
+        return out;
+    }
+    | bottom_val OP_MOD_ASSIGN expression
+    {
+        auto out = make_shared<StmtNode>(StmtType::Assign);
+        auto expr = make_shared<ExprNode>(ExprType::Mod, $bottom_val, $expression);
+        out->update = $bottom_val;
+        out->body = $expression;
+
+        return out;
+    }
+    | bottom_val OP_AND_ASSIGN expression
+    {
+        auto out = make_shared<StmtNode>(StmtType::Assign);
+        auto expr = make_shared<ExprNode>(ExprType::BitAnd, $bottom_val, $expression);
+        out->update = $bottom_val;
+        out->body = $expression;
+
+        return out;
+    }
+    | bottom_val OP_OR_ASSIGN expression
+    {
+        auto out = make_shared<StmtNode>(StmtType::Assign);
+        auto expr = make_shared<ExprNode>(ExprType::BitOr, $bottom_val, $expression);
+        out->update = $bottom_val;
+        out->body = $expression;
+
+        return out;
+    }
+    | bottom_val OP_XOR_ASSIGN expression
+    {
+        auto out = make_shared<StmtNode>(StmtType::Assign);
+        auto expr = make_shared<ExprNode>(ExprType::BitXOr, $bottom_val, $expression);
+        out->update = $bottom_val;
+        out->body = $expression;
+
+        return out;
+    }
+# endregion
+    # Explicit var define, can only be normal assignment
+    | type name OP_ASSIGN expression
+    {
+        auto out = make_shared<StmtNode>(StmtType::Assign);
         out->decl = $type;
         out->update = $name;
-        out->body = $assign_expr;
-
-        return out;
-    }
-    ;
-
-assign_op
-    = OP_ASSIGN { return make_shared<StmtNode>(StmtType::Assign); }
-    | OP_ADD_ASSIGN { return make_shared<StmtNode>(StmtType::AssignAdd); }
-    | OP_SUB_ASSIGN { return make_shared<StmtNode>(StmtType::AssignSub); }
-    | OP_MUL_ASSIGN { return make_shared<StmtNode>(StmtType::AssignMul); }
-    | OP_DIV_ASSIGN { return make_shared<StmtNode>(StmtType::AssignDiv); }
-    | OP_MOD_ASSIGN { return make_shared<StmtNode>(StmtType::AssignMod); }
-    | OP_AND_ASSIGN { return make_shared<StmtNode>(StmtType::AssignAnd); }
-    | OP_OR_ASSIGN { return make_shared<StmtNode>(StmtType::AssignOr); }
-    | OP_XOR_ASSIGN { return make_shared<StmtNode>(StmtType::AssignXOr); }
-    ;
-
-assign_expr
-    = expression
-    | expression KW_IF expression KW_ELSE expression # x = 12 if b else 15;
-    {
-        auto out = make_shared<StmtNode>(StmtType::If);
-        // True case
-        out->body = $0;
-        // check expression
-        out->check = $2;
-        // else statement
-        out->elseStmt = $4;
+        out->body = $expression;
 
         return out;
     }
@@ -698,8 +768,27 @@ catch_statement
 # region Expression
 
 # Expression, defines the order of operations
-expression
-    = expression KW_OR log_and_expr { return make_shared<ExprNode>(ExprType::LogOr, $0, $2); }
+expression =
+    ## ehhhhhhhh, ignoring this for now
+    # Ternary "operator", highest precedence
+    expression KW_IF log_or_expr KW_ELSE log_or_expr # x = 12 if b else 15;
+    {
+        auto out = make_shared<StmtNode>(StmtType::If);
+        // True case
+        out->body = $0;
+        // check expression
+        out->check = $2;
+        // else statement
+        out->elseStmt = $4;
+
+        return out;
+    }
+    | ##
+    log_or_expr
+    ;
+
+log_or_expr
+    = log_or_expr KW_OR log_and_expr { return make_shared<ExprNode>(ExprType::LogOr, $0, $2); }
     | log_and_expr
     ;
 
@@ -962,20 +1051,21 @@ expr_list
 # region Class stuff
 
 # Class
-class_definition
-    = access_modifier KW_CLASS NAME OPEN_PAREN NAME CLOSE_PAREN class_body
+class_definition # TODO access modifiers?
+    = access_modifier KW_CLASS NAME OPEN_PAREN name_list CLOSE_PAREN class_body
     {
-        auto parentType = make_shared<DataTypeNode>($4);
-        auto datatype = make_shared<DataTypeNode>(PrimitiveType::Class, parentType);
-        auto out = make_shared<DefNode>(DefType::Class, datatype, $2);
-        out->body = $class_body;
+        auto access = static_pointer_cast<AccessModNode>($access_modifier);
+        auto datatype = make_shared<DataTypeNode>(PrimitiveType::Class, $name_list);
+        auto out = make_shared<DefNode>($NAME, datatype, $class_body);
+        out->accessMod = access->accessMod;
         return out;
     }
     | access_modifier KW_CLASS NAME class_body
     {
+        auto access = static_pointer_cast<AccessModNode>($access_modifier);
         auto datatype = make_shared<DataTypeNode>(PrimitiveType::Class);
-        auto out = make_shared<DefNode>(DefType::Class, datatype, $NAME);
-        out->body = $class_body;
+        auto out = make_shared<DefNode>($NAME, datatype, $class_body);
+        out->accessMod = access->accessMod;
         return out;
     }
     ;
@@ -1006,7 +1096,7 @@ class_statements
 class_statement
     = access_modifier special_mod OPEN_CURLY var_def_list CLOSE_CURLY # Vars must be declared in an access modifer block
     {
-        auto defNode = static_pointer_cast<DefNode>($var_def_list);
+        auto defNode = static_pointer_cast<DefNode>($var_def_list); // TODO fixme, need to make var_def_list return a list of statements
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         AccessMod accessMod = accessModNode->accessMod;
         SpecialMod specialMod = SpecialMod::None;

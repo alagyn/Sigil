@@ -16,7 +16,7 @@ class Vehicle
     {
         int gasRemaining;
         int odometer;
-        string currentLocation = "asdf";
+        str currentLocation = "asdf";
         float mpg;
     }
     
@@ -29,7 +29,7 @@ class Vehicle
     
     public
     {
-        string name;
+        str name;
     }
     
     public init Vehicle(str name, int gasMax, float mpg)

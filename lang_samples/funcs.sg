@@ -17,6 +17,17 @@ int getSum(list<int> l)
     return sum;
 }
 
+private null printSum(array<int> l)
+{
+    sum = 0;
+    for x in l
+    {
+        sum += x;
+    }
+
+    print(sum);
+}
+
 int main(list<string> args)
 {
     l = getList();

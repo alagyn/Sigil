@@ -46,7 +46,7 @@ private:
     int maybeLoad(ASTNodePtr tree, int depth, int loc);
 
     void renderDef(DefNodePtr defNode);
-    void renderDatatype(DataTypeNodePtr datatype);
+    void renderDatatype(DatatypeNodePtr datatype);
     void renderStatement(StmtNodePtr stmt);
     void renderExpr(ExprNodePtr expr);
 

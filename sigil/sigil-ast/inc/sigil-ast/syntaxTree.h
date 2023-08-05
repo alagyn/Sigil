@@ -145,22 +145,26 @@ enum class PrimitiveType
     Map,
     Set,
     Tuple,
+
     Func,
+    Constr,
+    Deleter,
+
     Class,
     Enum
 };
 
 const char* const primitiveTypeName(PrimitiveType);
 
-class DataTypeNode : public ASTNode
+class DatatypeNode : public ASTNode
 {
 public:
-    DataTypeNode(
+    DatatypeNode(
         PrimitiveType type,
         ASTNodePtr subtype1 = nullptr,
         ASTNodePtr subtype2 = nullptr
     );
-    DataTypeNode(std::string name);
+    DatatypeNode(std::string name);
 
     PrimitiveType type;
     // Normal types, the map key type, or the return type
@@ -170,7 +174,7 @@ public:
     std::string name;
 };
 
-using DataTypeNodePtr = std::shared_ptr<DataTypeNode>;
+using DatatypeNodePtr = std::shared_ptr<DatatypeNode>;
 
 enum class AccessMod
 {
@@ -195,16 +199,10 @@ enum class StmtType
 {
     Error,
 
-    Assign,
-    AssignAdd,
-    AssignSub,
-    AssignMul,
-    AssignDiv,
-    AssignMod,
+    Define,
+    Import,
 
-    AssignAnd,
-    AssignOr,
-    AssignXOr,
+    Assign,
 
     If,
 
@@ -224,6 +222,9 @@ enum class StmtType
 
     Comprehension,
 
+    // Anonymous scopes
+    Scope,
+
     Return,
     Throw,
     Try,
@@ -240,7 +241,7 @@ public:
     StmtType stmtType;
 
     // Declarations for "for" and "while" loops, and types for assignment
-    ASTNodePtr decl;
+    DatatypeNodePtr decl;
 
     // iterable target for loops
     ASTNodePtr iterable;
@@ -279,40 +280,26 @@ public:
     SpecialMod specialMod;
 };
 
-enum class DefType
-{
-    Error,
-
-    // Body is the epxression used to assign. Works
-    // the same for func args
-    Var,
-
-    // Funcs use the parent type for the special mod type
-    // And body as the arg definitions
-    Func,
-    // Contructor
-    Init,
-    Delete,
-
-    Class,
-    Enum,
-    Import
-};
-
-const char* const defTypeName(DefType);
-
 class DefNode : public ASTNode
 {
 public:
-    DefNode(DefType defType, ASTNodePtr dataType, std::string name);
+    DefNode(
+        const std::string& name,
+        DatatypeNodePtr datatype,
+        ASTNodePtr body = nullptr
+    );
 
-    const DefType defType;
-    const ASTNodePtr dataType;
-    const std::string name;
-
+    std::string name;
+    DatatypeNodePtr datatype;
+    /*
+    Vars:
+        initial value for var
+    Funcs/Class/Enum:
+        code block
+    */
+    ASTNodePtr body;
     AccessMod accessMod;
     SpecialMod specialMod;
-    ASTNodePtr body;
 };
 
 using DefNodePtr = std::shared_ptr<DefNode>;

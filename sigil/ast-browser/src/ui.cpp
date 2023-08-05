@@ -150,11 +150,11 @@ protected:
 class DataTypeNodeWrap : public NodeWrap
 {
 public:
-    DataTypeNodePtr node;
+    DatatypeNodePtr node;
 
     int sub1Port, sub2Port;
 
-    DataTypeNodeWrap(DataTypeNodePtr node, int& idGen)
+    DataTypeNodeWrap(DatatypeNodePtr node, int& idGen)
         : NodeWrap(node, idGen)
         , node(node)
         , sub1Port(--idGen)
@@ -344,7 +344,7 @@ int ASTGraphBrowser::recurseLoadTree(ASTNodePtr tree, int depth, int loc)
         }
         case ASTNodeType::Datatype:
         {
-            auto x = static_pointer_cast<DataTypeNode>(tree);
+            auto x = static_pointer_cast<DatatypeNode>(tree);
             newLoc = maybeLoad(x->subtype1, nextDepth, newLoc);
             newLoc = maybeLoad(x->subtype2, nextDepth, newLoc);
             auto node = makeWrap<DataTypeNodeWrap>(x, depth, loc);

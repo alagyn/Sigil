@@ -73,7 +73,7 @@ ExprNode::ExprNode(double float_val)
 {
 }
 
-DataTypeNode::DataTypeNode(
+DatatypeNode::DatatypeNode(
     PrimitiveType type,
     ASTNodePtr subtype1,
     ASTNodePtr subtype2
@@ -85,7 +85,7 @@ DataTypeNode::DataTypeNode(
 {
 }
 
-DataTypeNode::DataTypeNode(std::string name)
+DatatypeNode::DatatypeNode(std::string name)
     : ASTNode(ASTNodeType::Datatype)
     , type(PrimitiveType::Unknown)
     , name(name)
@@ -104,17 +104,6 @@ SpecialModNode::SpecialModNode(SpecialMod specialMod)
 {
 }
 
-DefNode::DefNode(DefType defType, ASTNodePtr dataType, std::string name)
-    : ASTNode(ASTNodeType::Definition)
-    , defType(defType)
-    , dataType(dataType)
-    , name(name)
-    , accessMod(AccessMod::Default)
-    , specialMod(SpecialMod::None)
-    , body(nullptr)
-{
-}
-
 StmtNode::StmtNode(StmtType stmtType)
     : ASTNode(ASTNodeType::Statement)
     , stmtType(stmtType)
@@ -123,6 +112,16 @@ StmtNode::StmtNode(StmtType stmtType)
     , update(nullptr)
     , body(nullptr)
     , elseStmt(nullptr)
+{
+}
+
+DefNode::DefNode(const std::string& name, DatatypeNodePtr datatype, ASTNodePtr body)
+    : ASTNode(ASTNodeType::Definition)
+    , name(name)
+    , datatype(datatype)
+    , body(body)
+    , accessMod(AccessMod::Default)
+    , specialMod(SpecialMod::None)
 {
 }
 
@@ -301,8 +300,14 @@ const char* const primitiveTypeName(PrimitiveType type)
         return "Set";
     case PrimitiveType::Tuple:
         return "Tuple";
+
     case PrimitiveType::Func:
         return "Func";
+    case PrimitiveType::Constr:
+        return "Constr";
+    case PrimitiveType::Deleter:
+        return "Deleter";
+
     case PrimitiveType::Class:
         return "Class";
     case PrimitiveType::Enum:
@@ -337,24 +342,10 @@ const char* const stmtTypeName(StmtType type)
         throw std::runtime_error("Invalid type");
     case StmtType::Error:
         return "Error";
+    case StmtType::Import:
+        return "Import";
     case StmtType::Assign:
         return "Assign";
-    case StmtType::AssignAdd:
-        return "AssignAdd";
-    case StmtType::AssignSub:
-        return "AssignSub";
-    case StmtType::AssignMul:
-        return "AssignMul";
-    case StmtType::AssignDiv:
-        return "AssignDiv";
-    case StmtType::AssignMod:
-        return "AssignMod";
-    case StmtType::AssignAnd:
-        return "AssignAnd";
-    case StmtType::AssignOr:
-        return "AssignOr";
-    case StmtType::AssignXOr:
-        return "AssignXOr";
     case StmtType::If:
         return "If";
     case StmtType::ForIn:
@@ -371,6 +362,8 @@ const char* const stmtTypeName(StmtType type)
         return "With";
     case StmtType::Comprehension:
         return "Comprehension";
+    case StmtType::Scope:
+        return "Scope";
     case StmtType::Return:
         return "Return";
     case StmtType::Throw:
@@ -394,31 +387,6 @@ const char* const specialModName(SpecialMod mod)
         return "Abstract";
     case SpecialMod::Static:
         return "Static";
-    }
-}
-
-const char* const defTypeName(DefType type)
-{
-    switch(type)
-    {
-    default:
-        throw std::runtime_error("Invalid type");
-    case DefType::Error:
-        return "Error";
-    case DefType::Var:
-        return "Var";
-    case DefType::Func:
-        return "Func";
-    case DefType::Init:
-        return "Constr";
-    case DefType::Delete:
-        return "Delete";
-    case DefType::Class:
-        return "Class";
-    case DefType::Enum:
-        return "Enum";
-    case DefType::Import:
-        return "Import";
     }
 }
 

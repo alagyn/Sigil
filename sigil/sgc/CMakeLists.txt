@@ -3,7 +3,8 @@ project(sgc)
 
 
 set(SGC_SRC
-    src/main.cpp
+    src/sgc.cpp
+    src/typeChecker.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SGC_SRC})

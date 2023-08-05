@@ -17,6 +17,7 @@ namespace po = boost::program_options;
 int main(int argc, char* argv[])
 {
     po::options_description desc("Options");
+    po::positional_options_description positional;
 
     // clang-format off
     desc.add_options()
@@ -27,10 +28,19 @@ int main(int argc, char* argv[])
         ("entry,e", "Program entry point")
         */
         ;
+    positional.add
+        ("input-file", 1)
+        ;
     // clang-format on
 
     po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::store(
+        po::command_line_parser(argc, argv)
+            .options(desc)
+            .positional(positional)
+            .run(),
+        vm
+    );
     po::notify(vm);
 
     if(vm.count("help"))
@@ -59,12 +69,14 @@ int main(int argc, char* argv[])
     auto scanner = hermes::Scanner::New(input);
 
     hermes::Parser parser;
+    sigil::ASTNodePtr tree;
     try
     {
-        parser.parse(scanner);
+        tree = parser.parse(scanner);
     }
-    catch(const std::runtime_error& err)
+    catch(const std::exception& err)
     {
         cout << err.what() << "\n";
+        return 1;
     }
 }

@@ -3,6 +3,7 @@
 project(sigil_ast)
 
 set(${PROJECT_NAME}_SRC
+    src/symbolTable.cpp
     src/syntaxTree.cpp
 )
 
