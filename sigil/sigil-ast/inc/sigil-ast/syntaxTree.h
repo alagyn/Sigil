@@ -195,11 +195,51 @@ public:
     AccessMod accessMod;
 };
 
+enum class SpecialMod
+{
+    None,
+    Abstract,
+    Static
+};
+
+const char* const specialModName(SpecialMod);
+
+class SpecialModNode : public ASTNode
+{
+public:
+    SpecialModNode(SpecialMod specialMod);
+
+    SpecialMod specialMod;
+};
+
+class DefNode : public ASTNode
+{
+public:
+    DefNode(
+        const std::string& name,
+        DatatypeNodePtr datatype,
+        ASTNodePtr body = nullptr
+    );
+
+    std::string name;
+    DatatypeNodePtr datatype;
+    /*
+    Vars:
+        initial value for var
+    Funcs/Class/Enum:
+        code block
+    */
+    ASTNodePtr body;
+    AccessMod accessMod;
+    SpecialMod specialMod;
+};
+
+using DefNodePtr = std::shared_ptr<DefNode>;
+
 enum class StmtType
 {
     Error,
 
-    Define,
     Import,
 
     Assign,
@@ -241,7 +281,7 @@ public:
     StmtType stmtType;
 
     // Declarations for "for" and "while" loops, and types for assignment
-    DatatypeNodePtr decl;
+    DefNodePtr decl;
 
     // iterable target for loops
     ASTNodePtr iterable;
@@ -252,9 +292,12 @@ public:
 
     // Second expression in "ForTo", and names for assignments and catch vars
     // Update expression in "ForWhile"
+    // import targets
     ASTNodePtr update;
 
     // Code body, main code for trys
+    // imported "as" names
+    // expressions in comphrehensions
     ASTNodePtr body;
 
     // else statements, and elses for ternary, and catch for trys
@@ -262,46 +305,5 @@ public:
 };
 
 using StmtNodePtr = std::shared_ptr<StmtNode>;
-
-enum class SpecialMod
-{
-    None,
-    Abstract,
-    Static
-};
-
-const char* const specialModName(SpecialMod);
-
-class SpecialModNode : public ASTNode
-{
-public:
-    SpecialModNode(SpecialMod specialMod);
-
-    SpecialMod specialMod;
-};
-
-class DefNode : public ASTNode
-{
-public:
-    DefNode(
-        const std::string& name,
-        DatatypeNodePtr datatype,
-        ASTNodePtr body = nullptr
-    );
-
-    std::string name;
-    DatatypeNodePtr datatype;
-    /*
-    Vars:
-        initial value for var
-    Funcs/Class/Enum:
-        code block
-    */
-    ASTNodePtr body;
-    AccessMod accessMod;
-    SpecialMod specialMod;
-};
-
-using DefNodePtr = std::shared_ptr<DefNode>;
 
 } //namespace sigil

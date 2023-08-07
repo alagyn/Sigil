@@ -58,9 +58,8 @@ void tableEntry(const char* label, const char* fmt, Args... args)
     ImGui::Text(fmt, args...);
 }
 
-constexpr ImGuiTableFlags TABLE_FLAGS = ImGuiTableFlags_SizingFixedFit
-                                        | ImGuiTableFlags_Resizable
-                                        | ImGuiTableFlags_BordersInnerV;
+constexpr ImGuiTableFlags TABLE_FLAGS =
+    ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInnerV;
 
 void NodeWrap::_render()
 {
@@ -128,7 +127,6 @@ protected:
     {
         if(ImGui::BeginTable("def", 2, TABLE_FLAGS))
         {
-            tableEntry("Type", defTypeName(node->defType));
             tableEntry("Name", node->name);
             tableEntry("Special", specialModName(node->specialMod));
             tableEntry("Access", accessModName(node->accessMod));
@@ -136,13 +134,13 @@ protected:
             ImGui::EndTable();
         }
 
-        maybeAttr(dtPort, node->dataType, "Data Type");
+        maybeAttr(dtPort, node->datatype, "Data Type");
         maybeAttr(bodyPort, node->body, "Body");
     }
 
     void links() override
     {
-        maybeLink(dtPort, node->dataType);
+        maybeLink(dtPort, node->datatype);
         maybeLink(bodyPort, node->body);
     }
 };
@@ -335,7 +333,7 @@ int ASTGraphBrowser::recurseLoadTree(ASTNodePtr tree, int depth, int loc)
         case ASTNodeType::Definition:
         {
             auto x = static_pointer_cast<DefNode>(tree);
-            newLoc = maybeLoad(x->dataType, nextDepth, newLoc);
+            newLoc = maybeLoad(x->datatype, nextDepth, newLoc);
             newLoc = maybeLoad(x->body, nextDepth, newLoc);
             auto node = makeWrap<DefNodeWrap>(x, depth, loc);
             nodes.push_back(node);

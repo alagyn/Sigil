@@ -261,29 +261,29 @@ TYPE_UINT32 = "uint32";
 TYPE_UINT64 = "uint64";
 
 type
-    = TYPE_ARRAY OP_LT type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Array, $type); }
-    | TYPE_LIST OP_LT type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::List, $type); }
-    | TYPE_MAP OP_LT type COMMA type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Map, $2, $4); }
-    | TYPE_SET OP_LT type OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Set, $type); }
-    | TYPE_TUPLE OP_LT type_list OP_GT { return make_shared<DataTypeNode>(PrimitiveType::Tuple, $type_list); }
-    | TYPE_STR { return make_shared<DataTypeNode>(PrimitiveType::Str); }
+    = TYPE_ARRAY OP_LT type OP_GT { return make_shared<DatatypeNode>(PrimitiveType::Array, $type); }
+    | TYPE_LIST OP_LT type OP_GT { return make_shared<DatatypeNode>(PrimitiveType::List, $type); }
+    | TYPE_MAP OP_LT type COMMA type OP_GT { return make_shared<DatatypeNode>(PrimitiveType::Map, $2, $4); }
+    | TYPE_SET OP_LT type OP_GT { return make_shared<DatatypeNode>(PrimitiveType::Set, $type); }
+    | TYPE_TUPLE OP_LT type_list OP_GT { return make_shared<DatatypeNode>(PrimitiveType::Tuple, $type_list); }
+    | TYPE_STR { return make_shared<DatatypeNode>(PrimitiveType::Str); }
     # Int
-    | TYPE_INT8 { return make_shared<DataTypeNode>(PrimitiveType::Int8); }
-    | TYPE_INT16 { return make_shared<DataTypeNode>(PrimitiveType::Int16); }
-    | TYPE_INT32 { return make_shared<DataTypeNode>(PrimitiveType::Int32); }
-    | TYPE_INT64 { return make_shared<DataTypeNode>(PrimitiveType::Int64); }
-    | TYPE_INT { return make_shared<DataTypeNode>(PrimitiveType::Int64); }
+    | TYPE_INT8 { return make_shared<DatatypeNode>(PrimitiveType::Int8); }
+    | TYPE_INT16 { return make_shared<DatatypeNode>(PrimitiveType::Int16); }
+    | TYPE_INT32 { return make_shared<DatatypeNode>(PrimitiveType::Int32); }
+    | TYPE_INT64 { return make_shared<DatatypeNode>(PrimitiveType::Int64); }
+    | TYPE_INT { return make_shared<DatatypeNode>(PrimitiveType::Int64); }
     # Uint
-    | TYPE_UINT8 { return make_shared<DataTypeNode>(PrimitiveType::UInt8); }
-    | TYPE_UINT16 { return make_shared<DataTypeNode>(PrimitiveType::UInt16); }
-    | TYPE_UINT32 { return make_shared<DataTypeNode>(PrimitiveType::UInt32); }
-    | TYPE_UINT64 { return make_shared<DataTypeNode>(PrimitiveType::UInt64); }
-    | TYPE_UINT { return make_shared<DataTypeNode>(PrimitiveType::UInt64); }
+    | TYPE_UINT8 { return make_shared<DatatypeNode>(PrimitiveType::UInt8); }
+    | TYPE_UINT16 { return make_shared<DatatypeNode>(PrimitiveType::UInt16); }
+    | TYPE_UINT32 { return make_shared<DatatypeNode>(PrimitiveType::UInt32); }
+    | TYPE_UINT64 { return make_shared<DatatypeNode>(PrimitiveType::UInt64); }
+    | TYPE_UINT { return make_shared<DatatypeNode>(PrimitiveType::UInt64); }
 
-    | TYPE_FLOAT { return make_shared<DataTypeNode>(PrimitiveType::Float); }
-    | TYPE_BOOL { return make_shared<DataTypeNode>(PrimitiveType::Bool); }
-    | KW_NULL { return make_shared<DataTypeNode>(PrimitiveType::Null); }
-    | NAME { return make_shared<DataTypeNode>($0); }
+    | TYPE_FLOAT { return make_shared<DatatypeNode>(PrimitiveType::Float); }
+    | TYPE_BOOL { return make_shared<DatatypeNode>(PrimitiveType::Bool); }
+    | KW_NULL { return make_shared<DatatypeNode>(PrimitiveType::Null); }
+    | NAME { return make_shared<DatatypeNode>($0); }
     ;
 
 type_list
@@ -336,13 +336,13 @@ import_statement
     = KW_IMPORT module_name SEMICOLON
     {
         auto out = make_shared<StmtNode>(StmtType::Import);
-        out->decl = $module_name;
+        out->update = $module_name;
         return out;
     }
     | KW_IMPORT module_name KW_AS name SEMICOLON
     {
-        auto out = make_shared<StmtNode>(StmtNode::Import);
-        out->decl = $module_name;
+        auto out = make_shared<StmtNode>(StmtType::Import);
+        out->update = $module_name;
         out->body = $name;
         return out;
     }
@@ -360,7 +360,6 @@ module_name
 var_definition
     = access_modifier special_mod type NAME SEMICOLON
     {
-        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
         auto datatype = static_pointer_cast<DatatypeNode>($type);
@@ -369,37 +368,31 @@ var_definition
         decl->accessMod = accessModNode->accessMod;
         decl->specialMod = specialModNode->specialMod;
 
-        out->decl = decl;
-
-        return out;
+        return decl;
     }
     | access_modifier special_mod type NAME OP_ASSIGN expression SEMICOLON
     {
-        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
-        auto datatype = static_pointer_cast<DataTypeNode>($type);
+        auto datatype = static_pointer_cast<DatatypeNode>($type);
         auto decl = make_shared<DefNode>($NAME, datatype, $expression);
 
         decl->accessMod = accessModNode->accessMod;
         decl->specialMod = specialModNode->specialMod;
-        out->decl = decl;
 
-        return out;
+        return decl;
     }
     | access_modifier special_mod NAME OP_ASSIGN expression SEMICOLON # infer the type
     {
-        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
-        auto datatype = make_shared<DataTypeNode>(PrimitiveType::Unknown);
+        auto datatype = make_shared<DatatypeNode>(PrimitiveType::Unknown);
         auto decl = make_shared<DefNode>($NAME, datatype, $expression);
 
         decl->accessMod = accessModNode->accessMod;
         decl->specialMod = specialModNode->specialMod;
-        out->decl = decl;
 
-        return out;
+        return decl;
     }
     ;
 
@@ -418,44 +411,37 @@ special_mod
 func_definition
     = access_modifier special_mod type NAME OPEN_PAREN func_arg_definitions CLOSE_PAREN body
     {
-        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
-        auto datatypeNode = make_shared<DataTypeNode>(PrimitiveType::Func, $type, $func_arg_definitions);
+        auto datatypeNode = make_shared<DatatypeNode>(PrimitiveType::Func, $type, $func_arg_definitions);
         auto decl = make_shared<DefNode>($NAME, datatypeNode, $body);
 
         decl->accessMod = accessModNode->accessMod;
         decl->specialMod = specialModNode->specialMod;
-        out->decl = decl;
 
-        return out;
+        return decl;
     }
     # Constructors
     | access_modifier KW_INIT NAME OPEN_PAREN func_arg_definitions CLOSE_PAREN body
     {
-        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
-        auto datatypeNode = make_shared<DataTypeNode>(PrimitiveType::Constr, nullptr, $func_arg_definitions);
+        auto datatypeNode = make_shared<DatatypeNode>(PrimitiveType::Constr, nullptr, $func_arg_definitions);
         auto decl = make_shared<DefNode>($NAME, datatypeNode, $body);
 
         decl->accessMod = accessModNode->accessMod;
-        out->decl = decl;
 
-        return out;
+        return decl;
     }
     # Deconstructor
     | access_modifier KW_DELETE NAME OPEN_PAREN func_arg_definitions CLOSE_PAREN body
     {
-        auto out = make_shared<StmtNode>(StmtType::Define);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
-        auto datatypeNode = make_shared<DataTypeNode>(PrimitiveType::Func, nullptr, $func_arg_definitions);
+        auto datatypeNode = make_shared<DatatypeNode>(PrimitiveType::Func, nullptr, $func_arg_definitions);
         auto decl = make_shared<DefNode>($NAME, datatypeNode, $body);
 
         decl->accessMod = accessModNode->accessMod;
 
-        out->decl;
-
-        return out;
+        return decl;
     }
     ;
 
@@ -477,11 +463,11 @@ func_arg_def
     # TODO is expression the right thing here? The value should be evaluatable at compile time
     = type NAME OP_ASSIGN expression
     {
-        return make_shared<DefNode>($NAME, $type, $expression);
+        return make_shared<DefNode>($NAME, static_pointer_cast<DatatypeNode>($type), $expression);
     }
     | type NAME
     {
-        return make_shared<DefNode>($NAME, $type);
+        return make_shared<DefNode>($NAME, static_pointer_cast<DatatypeNode>($type));
     }
     ;
 
@@ -551,10 +537,10 @@ with_statement
 
         return out;
     }
-    | KW_WITH expression KW_AS name body
+    | KW_WITH expression KW_AS NAME body
     {
         auto out = make_shared<StmtNode>(StmtType::With);
-        auto datatype = make_shared<DataTypeNode>(PrimitiveType::Unknown);
+        auto datatype = make_shared<DatatypeNode>(PrimitiveType::Unknown);
         auto decl = make_shared<DefNode>($NAME, datatype, $expression);
 
         out->decl = decl;
@@ -586,11 +572,11 @@ do_while_statement
     };
 
 # For statements
-for_statement
-    = KW_FOR name_list KW_IN expression if_clause body
+for_statement # TODO tuple expansion
+    = KW_FOR name_list KW_IN expression if_clause body 
     {
         auto out = make_shared<StmtNode>(StmtType::ForIn);
-        out->decl = $name_list;
+        out->decl = static_pointer_cast<DefNode>($name_list);
         out->iterable = $expression;
         out->check = $if_clause;
         out->body = $body;
@@ -599,7 +585,7 @@ for_statement
     | KW_FOR name_list KW_IN expression KW_TO expression if_clause body
     {
         auto out = make_shared<StmtNode>(StmtType::ForTo);
-        out->decl = $name_list;
+        out->decl = static_pointer_cast<DefNode>($name_list);
         out->iterable = $3;
         out->check = $if_clause;
         out->update = $5;
@@ -714,15 +700,7 @@ assignment
     }
 # endregion
     # Explicit var define, can only be normal assignment
-    | type name OP_ASSIGN expression
-    {
-        auto out = make_shared<StmtNode>(StmtType::Assign);
-        out->decl = $type;
-        out->update = $name;
-        out->body = $expression;
-
-        return out;
-    }
+    | type NAME OP_ASSIGN expression { return make_shared<DefNode>($NAME, static_pointer_cast<DatatypeNode>($type), $expression); }
     ;
 
 throw_statement
@@ -953,11 +931,19 @@ keyval_pair
 
 
 name_list
-    = name
-    | name name_list
+    = name_decl
+    | name_decl name_list
     {
         $0->next = $1;
         return $0;
+    }
+    ;
+
+name_decl
+    = NAME
+    {
+        auto datatype = make_shared<DatatypeNode>(PrimitiveType::Unknown);
+        return make_shared<DefNode>($NAME, datatype);
     }
     ;
 
@@ -965,7 +951,7 @@ for_if_clause
     = KW_FOR name_list KW_IN expression if_clause
     {
         auto out = make_shared<StmtNode>(StmtType::ForIn);
-        out->decl = $name_list;
+        out->decl = static_pointer_cast<DefNode>($name_list);
         out->iterable = $expression;
         out->check = $if_clause;
         return out;
@@ -1002,7 +988,7 @@ comprehension
     = OPEN_SQUARE expression for_if_clause CLOSE_SQUARE
     {
         auto out = make_shared<StmtNode>(StmtType::Comprehension);
-        out->decl = $expression;
+        out->body = $expression;
         auto for_if = static_pointer_cast<StmtNode>($for_if_clause);
         if(for_if)
         {
@@ -1015,7 +1001,7 @@ comprehension
     | OPEN_CURLY expression for_if_clause CLOSE_CURLY
     {
         auto out = make_shared<StmtNode>(StmtType::Comprehension);
-        out->decl = $expression;
+        out->body = $expression;
         auto for_if = static_pointer_cast<StmtNode>($for_if_clause);
         if(for_if)
         {
@@ -1028,7 +1014,7 @@ comprehension
     | OPEN_CURLY keyval_pair for_if_clause CLOSE_CURLY
     {
         auto out = make_shared<StmtNode>(StmtType::Comprehension);
-        out->decl = $keyval_pair;
+        out->body = $keyval_pair;
         auto for_if = static_pointer_cast<StmtNode>($for_if_clause);
         if(for_if)
         {
@@ -1051,11 +1037,11 @@ expr_list
 # region Class stuff
 
 # Class
-class_definition # TODO access modifiers?
+class_definition
     = access_modifier KW_CLASS NAME OPEN_PAREN name_list CLOSE_PAREN class_body
     {
         auto access = static_pointer_cast<AccessModNode>($access_modifier);
-        auto datatype = make_shared<DataTypeNode>(PrimitiveType::Class, $name_list);
+        auto datatype = make_shared<DatatypeNode>(PrimitiveType::Class, $name_list);
         auto out = make_shared<DefNode>($NAME, datatype, $class_body);
         out->accessMod = access->accessMod;
         return out;
@@ -1063,7 +1049,7 @@ class_definition # TODO access modifiers?
     | access_modifier KW_CLASS NAME class_body
     {
         auto access = static_pointer_cast<AccessModNode>($access_modifier);
-        auto datatype = make_shared<DataTypeNode>(PrimitiveType::Class);
+        auto datatype = make_shared<DatatypeNode>(PrimitiveType::Class);
         auto out = make_shared<DefNode>($NAME, datatype, $class_body);
         out->accessMod = access->accessMod;
         return out;
@@ -1094,9 +1080,9 @@ class_statements
     ;
 
 class_statement
-    = access_modifier special_mod OPEN_CURLY var_def_list CLOSE_CURLY # Vars must be declared in an access modifer block
+    = access_modifier special_mod OPEN_CURLY var_def_list CLOSE_CURLY
     {
-        auto defNode = static_pointer_cast<DefNode>($var_def_list); // TODO fixme, need to make var_def_list return a list of statements
+        auto defNode = static_pointer_cast<DefNode>($var_def_list);
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         AccessMod accessMod = accessModNode->accessMod;
         SpecialMod specialMod = SpecialMod::None;
@@ -1108,6 +1094,7 @@ class_statement
         /*
             We are going to overwrite all of the definitions access/special mods so we can
             avoid making a wrapper node for this block.
+            These blocks also do no incur a new scope being created
 
             TODO should we throw an error here? maybe just emit a warning about overwritten access
         */
@@ -1140,10 +1127,9 @@ enum_definition
     = access_modifier KW_ENUM NAME OPEN_CURLY enum_statements CLOSE_CURLY
     {
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
-        auto dataType = make_shared<DataTypeNode>(PrimitiveType::Enum);
-        auto out = make_shared<DefNode>(DefType::Enum, dataType, $NAME);
+        auto dataType = make_shared<DatatypeNode>(PrimitiveType::Enum);
+        auto out = make_shared<DefNode>($NAME, dataType, $enum_statements);
         out->accessMod = accessModNode->accessMod;
-        out->body = $enum_statements;
 
         return out;
     };
