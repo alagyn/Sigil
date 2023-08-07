@@ -19,6 +19,6 @@ target_link_libraries(${PROJECT_NAME}
         hermes
         Boost::program_options
         Boost::filesystem
-        imgui
+        imnodes
         glfw
 )

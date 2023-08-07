@@ -22,16 +22,12 @@ set(imgui_srcs
     imgui/imgui_widgets.cpp
     imgui/backends/imgui_impl_glfw.cpp
     imgui/backends/imgui_impl_opengl3.cpp
-
-    # ImNodes
-    imnodes/imnodes.cpp
 )
 
 add_library(imgui STATIC ${imgui_srcs})
 target_include_directories(imgui
     PUBLIC
         imgui
-        imnodes
 )
 
 target_link_libraries(imgui
@@ -54,11 +50,24 @@ else()
     )
 endif()
 
-
 target_compile_definitions(imgui
     PUBLIC
     IMGUI_DISABLE_OBSOLETE_KEYIO
     IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+)
+
+add_library(imnodes STATIC imnodes/imnodes.cpp)
+target_include_directories(imnodes
+    PUBLIC
+        imnodes
+)
+
+target_link_libraries(imnodes
+    PUBLIC
+        imgui
+)
+
+target_compile_definitions(imnodes
     PRIVATE
-    IMGUI_DEFINE_MATH_OPERATORS
+        IMGUI_DEFINE_MATH_OPERATORS
 )
