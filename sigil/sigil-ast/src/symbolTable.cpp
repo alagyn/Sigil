@@ -32,8 +32,34 @@ Symbol::Symbol(
 {
 }
 
-Scope::Scope()
+Scope::Scope(Scope* parent)
+    : parent(parent)
 {
+}
+
+Scope::~Scope()
+{
+    for(auto s : scopes)
+    {
+        delete s;
+    }
+}
+
+Scope* Scope::scopeEnter()
+{
+    Scope* out;
+    if(nextIndex < scopes.size())
+    {
+        out = scopes[nextIndex];
+    }
+    else
+    {
+        auto out = new Scope(this);
+        scopes.push_back(out);
+    }
+
+    ++nextIndex;
+    return out;
 }
 
 void Scope::bind(SymbolPtr symbol)
@@ -49,46 +75,56 @@ SymbolPtr Scope::lookup(const std::string& name)
     return symbols[name];
 }
 
-SymbolTable::SymbolTable()
+void Scope::resetIndicies()
 {
-    // Add the global scope
-    scopes.emplace_back();
+    nextIndex = 0;
+    for(auto scope : scopes)
+    {
+        scope->resetIndicies();
+    }
+}
+
+SymbolTable::SymbolTable()
+    : curDepth(1)
+    , global(nullptr)
+    , curScope(&global)
+{
 }
 
 void SymbolTable::scopeEnter()
 {
-    // Add a new scope
-    scopes.emplace_back();
+    curScope = curScope->scopeEnter();
+    ++curDepth;
 }
 
 void SymbolTable::scopeExit()
 {
-    // We won't error check here since we should be
-    // checking depth first
-    scopes.pop_back();
+    curScope = curScope->parent;
+    --curDepth;
 }
 
 int SymbolTable::depth()
 {
-    return scopes.size();
+    return curDepth;
 }
 
 void SymbolTable::bind(SymbolPtr symbol)
 {
-    scopes.back().bind(symbol);
+    curScope->bind(symbol);
 }
 
 SymbolPtr SymbolTable::lookup(const std::string& name)
 {
     SymbolPtr out;
-    // iterate backwards
-    for(auto iter = scopes.rbegin(); iter != scopes.rend(); ++iter)
+    Scope* cur = curScope;
+    while(cur != nullptr)
     {
-        out = iter->lookup(name);
+        out = cur->lookup(name);
         if(out)
         {
             break;
         }
+        cur = cur->parent;
     }
 
     return out;
@@ -96,7 +132,12 @@ SymbolPtr SymbolTable::lookup(const std::string& name)
 
 SymbolPtr SymbolTable::lookupLocal(const std::string& name)
 {
-    return scopes.back().lookup(name);
+    return curScope->lookup(name);
+}
+
+void SymbolTable::resetIndices()
+{
+    global.resetIndicies();
 }
 
 } //namespace sigil

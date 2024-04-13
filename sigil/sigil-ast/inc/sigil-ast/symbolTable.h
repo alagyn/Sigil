@@ -3,6 +3,7 @@
 #include <deque>
 #include <map>
 #include <memory>
+#include <vector>
 
 namespace sigil {
 
@@ -29,17 +30,29 @@ public:
 
 typedef std::shared_ptr<Symbol> SymbolPtr;
 
+class Scope;
+
 class Scope
 {
 public:
-    Scope();
+    Scope(Scope* parent);
+    ~Scope();
 
     void bind(SymbolPtr symbol);
 
     SymbolPtr lookup(const std::string& name);
 
+    Scope* scopeEnter();
+
+    Scope* const parent;
+
+    void resetIndicies();
+
 private:
+    size_t nextIndex;
     std::map<std::string, SymbolPtr> symbols;
+
+    std::vector<Scope*> scopes;
 };
 
 class SymbolTable
@@ -60,9 +73,12 @@ public:
     // Try to find the definition of the name, but only check the current scope
     SymbolPtr lookupLocal(const std::string& name);
 
+    void resetIndices();
+
 private:
-    // using a deque so we can iterate over it
-    std::deque<Scope> scopes;
+    int curDepth;
+    Scope global;
+    Scope* curScope;
 };
 
 } //namespace sigil

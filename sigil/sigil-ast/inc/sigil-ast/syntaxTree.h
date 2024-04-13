@@ -97,6 +97,9 @@ enum class ExprType
 
 const char* const exprTypeName(ExprType);
 
+class ExprNode;
+using ExprNodePtr = std::shared_ptr<ExprNode>;
+
 class ExprNode : public ASTNode
 {
 public:
@@ -110,16 +113,14 @@ public:
     explicit ExprNode(double float_val);
 
     ExprType type;
-    ASTNodePtr left;
-    ASTNodePtr right;
+    ExprNodePtr left;
+    ExprNodePtr right;
 
     int64_t int_val;
     uint64_t uint_val;
     double float_val;
     std::string str_val;
 };
-
-using ExprNodePtr = std::shared_ptr<ExprNode>;
 
 enum class PrimitiveType
 {
@@ -156,6 +157,9 @@ enum class PrimitiveType
 
 const char* const primitiveTypeName(PrimitiveType);
 
+class DatatypeNode;
+using DatatypeNodePtr = std::shared_ptr<DatatypeNode>;
+
 class DatatypeNode : public ASTNode
 {
 public:
@@ -168,13 +172,11 @@ public:
 
     PrimitiveType type;
     // Normal types, the map key type, or the return type
-    ASTNodePtr subtype1;
+    DatatypeNodePtr subtype1;
     // map value type, or the function arg list
-    ASTNodePtr subtype2;
+    DatatypeNodePtr subtype2;
     std::string name;
 };
-
-using DatatypeNodePtr = std::shared_ptr<DatatypeNode>;
 
 enum class AccessMod
 {
@@ -223,12 +225,10 @@ public:
 
     std::string name;
     DatatypeNodePtr datatype;
-    /*
-    Vars:
-        initial value for var
-    Funcs/Class/Enum:
-        code block
-    */
+    // vars: initial value for var
+    ExprNodePtr value;
+
+    // Funcs/Class/Enum: code block
     ASTNodePtr body;
     AccessMod accessMod;
     SpecialMod specialMod;

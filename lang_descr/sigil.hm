@@ -375,8 +375,8 @@ var_definition
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
         auto datatype = static_pointer_cast<DatatypeNode>($type);
-        auto decl = make_shared<DefNode>($NAME, datatype, $expression);
-
+        auto decl = make_shared<DefNode>($NAME, datatype);
+        decl->value = static_pointer_cast<ExprNode>($expression);
         decl->accessMod = accessModNode->accessMod;
         decl->specialMod = specialModNode->specialMod;
 
@@ -387,8 +387,8 @@ var_definition
         auto accessModNode = static_pointer_cast<AccessModNode>($access_modifier);
         auto specialModNode = static_pointer_cast<SpecialModNode>($special_mod);
         auto datatype = make_shared<DatatypeNode>(PrimitiveType::Unknown);
-        auto decl = make_shared<DefNode>($NAME, datatype, $expression);
-
+        auto decl = make_shared<DefNode>($NAME, datatype);
+        decl->value = static_pointer_cast<ExprNode>($expression);
         decl->accessMod = accessModNode->accessMod;
         decl->specialMod = specialModNode->specialMod;
 
@@ -463,7 +463,9 @@ func_arg_def
     # TODO is expression the right thing here? The value should be evaluatable at compile time
     = type NAME OP_ASSIGN expression
     {
-        return make_shared<DefNode>($NAME, static_pointer_cast<DatatypeNode>($type), $expression);
+        auto out = make_shared<DefNode>($NAME, static_pointer_cast<DatatypeNode>($type));
+        out->value = static_pointer_cast<ExprNode>($expression);
+        return out;
     }
     | type NAME
     {
@@ -541,8 +543,8 @@ with_statement
     {
         auto out = make_shared<StmtNode>(StmtType::With);
         auto datatype = make_shared<DatatypeNode>(PrimitiveType::Unknown);
-        auto decl = make_shared<DefNode>($NAME, datatype, $expression);
-
+        auto decl = make_shared<DefNode>($NAME, datatype);
+        decl->value = static_pointer_cast<ExprNode>($expression);
         out->decl = decl;
         out->body = $body;
 
@@ -700,7 +702,12 @@ assignment
     }
 # endregion
     # Explicit var define, can only be normal assignment
-    | type NAME OP_ASSIGN expression { return make_shared<DefNode>($NAME, static_pointer_cast<DatatypeNode>($type), $expression); }
+    | type NAME OP_ASSIGN expression 
+    { 
+        auto out = make_shared<DefNode>($NAME, static_pointer_cast<DatatypeNode>($type));
+        out->value = static_pointer_cast<ExprNode>($expression);
+        return out;
+    }
     ;
 
 throw_statement
